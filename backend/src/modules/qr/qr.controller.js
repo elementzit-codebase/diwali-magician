@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getEventByToken,
+  getOrCreateEventToken,
   regenerateEventToken,
   revokeEventToken,
   generateQrDataUrl,
@@ -21,7 +22,25 @@ router.get('/access/:token', apiLimiter, async (req, res, next) => {
   }
 });
 
-// 2. ADMIN ONLY: Regenerate event QR token
+// 2. ADMIN ONLY: Get or load permanent Event QR code without changing/invalidating it
+router.get('/event/:eventId', requireAdminAuth, async (req, res, next) => {
+  try {
+    const { rawToken, title, isExisting } = await getOrCreateEventToken(req.params.eventId);
+    const accessUrl = `${req.protocol}://${req.get('host')}/vote?token=${rawToken}`;
+    const qrDataUrl = await generateQrDataUrl(accessUrl);
+
+    res.json({
+      message: isExisting ? 'Event QR code loaded successfully' : 'Event QR code generated successfully',
+      rawToken,
+      accessUrl,
+      qrDataUrl,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 3. ADMIN ONLY: Regenerate event QR token (only if explicitly requested)
 router.post('/regenerate/:eventId', requireAdminAuth, async (req, res, next) => {
   try {
     const { rawToken } = await regenerateEventToken(req.params.eventId);

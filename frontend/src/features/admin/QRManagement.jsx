@@ -37,6 +37,13 @@ export default function QRManagement({ preselectedEventId }) {
     }
   }, [preselectedEventId]);
 
+  // Automatically load the fixed QR code when the selected event changes
+  useEffect(() => {
+    if (selectedEventId) {
+      loadEventQR(selectedEventId);
+    }
+  }, [selectedEventId]);
+
   // When QR code is generated or toggled, render template if enabled
   useEffect(() => {
     if (useTemplate && tokenData?.qrDataUrl) {
@@ -58,11 +65,25 @@ export default function QRManagement({ preselectedEventId }) {
     }
   }
 
-  async function handleRegenerate() {
+  async function loadEventQR(eventId) {
+    if (!eventId) return;
+    setLoading(true);
+    setMessage('');
+    try {
+      const res = await api.get(`/api/qr/event/${eventId}`);
+      setTokenData(res);
+    } catch (err) {
+      console.error('Failed to load QR code:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleForceRegenerate() {
     if (!selectedEventId) return;
     if (
       !window.confirm(
-        'Regenerating this QR code will immediately invalidate all existing printed or displayed QR codes for this event. Continue?'
+        'WARNING: Regenerating this QR code will permanently invalidate all previously printed posters and badges for this event! Are you sure you want to replace it?'
       )
     ) {
       return;
@@ -215,21 +236,33 @@ export default function QRManagement({ preselectedEventId }) {
           </select>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 pt-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-brand-border/60">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => loadEventQR(selectedEventId)}
+              disabled={loading || !selectedEventId}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-red hover:bg-brand-darkRed text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+            >
+              <QrCode className="w-4 h-4" />
+              Display QR Code
+            </button>
+            <button
+              onClick={handleRevoke}
+              disabled={loading || !selectedEventId}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-medium transition-colors"
+            >
+              <Slash className="w-3.5 h-3.5" /> Revoke QR Access
+            </button>
+          </div>
+
           <button
-            onClick={handleRegenerate}
+            onClick={handleForceRegenerate}
             disabled={loading || !selectedEventId}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-red hover:bg-brand-darkRed text-white text-xs font-medium shadow-sm transition-all disabled:opacity-50"
+            title="Only use if your current QR is compromised. Printed physical QR codes will stop working."
+            className="flex items-center gap-1 px-3 py-2 rounded-xl text-[11px] text-brand-secondary hover:text-red-700 hover:bg-red-50/50 transition-colors"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            {tokenData ? 'Regenerate New Token' : 'Generate / Reveal QR Code'}
-          </button>
-          <button
-            onClick={handleRevoke}
-            disabled={loading || !selectedEventId}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-medium transition-colors"
-          >
-            <Slash className="w-3.5 h-3.5" /> Revoke QR Access
+            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+            Regenerate New Token (Emergency Only)
           </button>
         </div>
 

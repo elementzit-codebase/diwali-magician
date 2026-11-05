@@ -42,6 +42,37 @@ export async function getEventByToken(rawToken) {
   };
 }
 
+export async function getOrCreateEventToken(eventId) {
+  const res = await query(
+    `SELECT id, title, raw_access_token, access_token_hash FROM events WHERE id = $1`,
+    [eventId]
+  );
+
+  if (res.rowCount === 0) {
+    throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
+  }
+
+  const event = res.rows[0];
+
+  // If already generated, return the existing fixed token
+  if (event.raw_access_token) {
+    return { rawToken: event.raw_access_token, title: event.title, isExisting: true };
+  }
+
+  // Otherwise generate and store permanently
+  const rawToken = generateSecureToken(32);
+  const tokenHash = hashToken(rawToken);
+
+  await query(
+    `UPDATE events
+     SET access_token_hash = $1, raw_access_token = $2, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $3`,
+    [tokenHash, rawToken, eventId]
+  );
+
+  return { rawToken, title: event.title, isExisting: false };
+}
+
 export async function regenerateEventToken(eventId) {
   const rawToken = generateSecureToken(32);
   const tokenHash = hashToken(rawToken);

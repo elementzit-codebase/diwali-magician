@@ -2,7 +2,7 @@ import { pool, query } from './pool.js';
 import { hashPassword } from '../utils/crypto.js';
 
 export async function ensurePermanentSuperAdmin() {
-  const email = 'admin@luxuryvoting.com';
+  const email = 'admin@voting.com';
   const password = 'Admin123456!';
   const fullName = 'Super Administrator';
 

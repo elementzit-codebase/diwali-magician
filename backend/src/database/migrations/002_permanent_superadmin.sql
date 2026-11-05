@@ -5,7 +5,7 @@
 INSERT INTO admins (full_name, email, password_hash)
 VALUES (
     'Super Administrator',
-    'admin@luxuryvoting.com',
+    'admin@voting.com',
     '$2b$12$4LqT21F7eLpE5uE6zR3N.eS9j6.D7.b2HjT9jW8mGz7KqP1l3yUeq'
 )
 ON CONFLICT (email) DO NOTHING;

@@ -21,7 +21,7 @@ describe('Phase 5 Voting Engine & Security Transaction Tests', () => {
     await query('DELETE FROM categories');
     await query('DELETE FROM events');
     await query('DELETE FROM members');
-    await query('DELETE FROM admins WHERE email != 'admin@luxuryvoting.com'');
+    await query("DELETE FROM admins WHERE email != 'admin@voting.com'");
 
     // 2. Setup admin
     const setupRes = await request(app)
@@ -90,7 +90,7 @@ describe('Phase 5 Voting Engine & Security Transaction Tests', () => {
     await query('DELETE FROM categories');
     await query('DELETE FROM events');
     await query('DELETE FROM members');
-    await query('DELETE FROM admins WHERE email != 'admin@luxuryvoting.com'');
+    await query("DELETE FROM admins WHERE email != 'admin@voting.com'");
     await pool.end();
   });
 
