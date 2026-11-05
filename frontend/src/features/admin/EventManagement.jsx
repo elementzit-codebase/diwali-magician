@@ -314,6 +314,15 @@ export default function EventManagement({ onSelectEventForQR }) {
                     <ExternalLink className="w-3.5 h-3.5" /> View Voting Page
                   </a>
                 )}
+                <a
+                  href={`/stage?eventId=${evt.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold text-emerald-800 transition-colors flex items-center gap-1 border border-emerald-200"
+                  title="Open live presentation screen / results"
+                >
+                  <Award className="w-3.5 h-3.5 text-emerald-600" /> View Result
+                </a>
                 {evt.status === 'active' && (
                   <button
                     onClick={() => handleCloseEarly(evt.id)}

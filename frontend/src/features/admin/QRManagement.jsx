@@ -196,7 +196,7 @@ export default function QRManagement({ preselectedEventId }) {
 
     const templateImg = new Image();
     // Do not set crossOrigin for same-origin local assets
-    templateImg.src = '/template-bni.png';
+    templateImg.src = '/template-bni.jpg';
 
     templateImg.onload = () => {
       canvas.width = templateImg.naturalWidth; // 5962
@@ -240,7 +240,7 @@ export default function QRManagement({ preselectedEventId }) {
         ctx.fillText('Scan with mobile camera to vote', boxX + boxW / 2, qrY + qrSize + 170);
 
         try {
-          const dataUrl = canvas.toDataURL('image/png', 0.92);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
           setTemplatedImageSrc(dataUrl);
         } catch (err) {
           console.error('Canvas export error:', err);
@@ -258,7 +258,7 @@ export default function QRManagement({ preselectedEventId }) {
     };
 
     templateImg.onerror = (e) => {
-      console.error('Failed to load /template-bni.png:', e);
+      console.error('Failed to load /template-bni.jpg:', e);
       setGeneratingTemplate(false);
       setUseTemplate(false);
     };
@@ -538,13 +538,13 @@ export default function QRManagement({ preselectedEventId }) {
               href={useTemplate && templatedImageSrc ? templatedImageSrc : tokenData.qrDataUrl}
               download={
                 useTemplate
-                  ? 'bni-festival-voting-poster.png'
+                  ? 'bni-festival-voting-poster.jpg'
                   : 'event-voting-qr.png'
               }
               className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-brand-red hover:bg-brand-darkRed text-white text-xs font-semibold transition-all shadow-sm"
             >
               <Download className="w-4 h-4" />{' '}
-              {useTemplate ? 'Download Complete Poster (PNG)' : 'Download Standalone QR (PNG)'}
+              {useTemplate ? 'Download Complete Poster (JPG)' : 'Download Standalone QR (PNG)'}
             </a>
             <a
               href={tokenData.accessUrl}

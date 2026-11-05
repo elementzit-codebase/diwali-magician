@@ -74,7 +74,7 @@ export default function DisplayStage() {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const templateImg = new Image();
-    templateImg.src = '/template-bni.png';
+    templateImg.src = '/template-bni.jpg';
 
     templateImg.onload = () => {
       canvas.width = templateImg.naturalWidth; // 5962
@@ -112,7 +112,7 @@ export default function DisplayStage() {
         ctx.fillText('Scan with mobile camera to vote', boxX + boxW / 2, qrY + qrSize + 170);
 
         try {
-          const dataUrl = canvas.toDataURL('image/png', 0.92);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
           setPosterSrc(dataUrl);
         } catch (err) {
           console.error('Canvas export error:', err);
@@ -127,11 +127,12 @@ export default function DisplayStage() {
     };
 
     templateImg.onerror = () => {
+      console.error('Failed to load /template-bni.jpg');
       setGeneratingPoster(false);
     };
   }
 
-  // Composite winner names dynamically onto Wiiner template.png
+  // Composite winner names dynamically onto winner-template.jpg
   function renderWinnerPoster(data) {
     if (!data) return;
     setGeneratingWinnerPoster(true);
@@ -139,7 +140,7 @@ export default function DisplayStage() {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const winnerImg = new Image();
-    winnerImg.src = '/winner-template.png';
+    winnerImg.src = '/winner-template.jpg';
 
     winnerImg.onload = () => {
       canvas.width = winnerImg.naturalWidth || 5961;
@@ -261,7 +262,7 @@ export default function DisplayStage() {
       drawWinnersList(speechWinners, card2);
 
       try {
-        const dataUrl = canvas.toDataURL('image/png', 0.95);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
         setWinnerPosterSrc(dataUrl);
       } catch (err) {
         console.error('Canvas export error for winner poster:', err);
@@ -271,7 +272,7 @@ export default function DisplayStage() {
     };
 
     winnerImg.onerror = (e) => {
-      console.error('Failed to load /winner-template.png:', e);
+      console.error('Failed to load /winner-template.jpg:', e);
       setGeneratingWinnerPoster(false);
     };
   }
