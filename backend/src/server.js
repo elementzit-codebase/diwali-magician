@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import { createApp } from './app.js';
 import { config } from './config/index.js';
+import { runMigrations } from './database/migrate.js';
 import { ensurePermanentSuperAdmin } from './database/ensure_superadmin.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -64,6 +65,13 @@ async function startServer() {
   app.use('/api/*', (req, res) => {
     res.status(404).json({ error: 'Endpoint not found' });
   });
+
+  // Auto-run pending database migrations on boot
+  try {
+    await runMigrations();
+  } catch (migErr) {
+    console.error('[Migrations Boot Error]', migErr.message);
+  }
 
   // Ensure Permanent Superadmin exists
   await ensurePermanentSuperAdmin();
