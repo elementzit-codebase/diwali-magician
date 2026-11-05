@@ -53,8 +53,8 @@ export default function QRLanding({ event, onStartVoting, onRefresh }) {
                     2
                   </span>
                   <span>
-                    Cast one vote for <strong>Best Dressing</strong> and one for{' '}
-                    <strong>Best Speech</strong>.
+                    Cast one vote for <strong>Diwali Style Icon</strong> and one for{' '}
+                    <strong>Sparkling Speaker</strong>.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">

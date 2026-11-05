@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api.js';
 import Modal from '../../components/Modal.jsx';
+import { usePopup } from '../../components/PopupModal.jsx';
 import {
   Calendar,
   Clock,
@@ -11,9 +12,11 @@ import {
   StopCircle,
   CheckCircle,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
 
 export default function EventManagement({ onSelectEventForQR }) {
+  const { showConfirm, showError } = usePopup();
   const [events, setEvents] = useState([]);
   const [allMembers, setAllMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +72,7 @@ export default function EventManagement({ onSelectEventForQR }) {
         title,
         description,
         durationMinutes: parseInt(durationMinutes, 10) || 5,
-        categories: ['Best Dressing', 'Best Speech'],
+        categories: ['Diwali Style Icon', 'Sparkling Speaker'],
       });
       setIsCreateOpen(false);
       setTitle('');
@@ -82,7 +85,12 @@ export default function EventManagement({ onSelectEventForQR }) {
   }
 
   async function handleStartVoting(eventId, minutes) {
-    if (!window.confirm(`Start voting now for ${minutes || 5} minutes? Attendee QR codes will unlock immediately!`)) return;
+    const confirmed = await showConfirm(
+      `Start voting now for ${minutes || 5} minutes? Attendee QR codes will unlock immediately!`,
+      { title: 'Start Voting' }
+    );
+    if (!confirmed) return;
+
     setStartingEventId(eventId);
     try {
       await api.post(`/api/events/${eventId}/start`, { durationMinutes: minutes || 5 });
@@ -93,19 +101,43 @@ export default function EventManagement({ onSelectEventForQR }) {
         onSelectEventForQR(eventId);
       }
     } catch (err) {
-      alert(err.message || 'Failed to start voting');
+      showError(err.message || 'Failed to start voting');
     } finally {
       setStartingEventId(null);
     }
   }
 
   async function handleCloseEarly(eventId) {
-    if (!window.confirm('Are you sure you want to close voting early for this event?')) return;
+    const confirmed = await showConfirm(
+      'Are you sure you want to close voting early for this event?',
+      { title: 'Close Voting Early', confirmText: 'Close Early' }
+    );
+    if (!confirmed) return;
+
     try {
       await api.post(`/api/events/${eventId}/close`);
       loadEvents();
     } catch (err) {
-      alert(err.message || 'Failed to close voting');
+      showError(err.message || 'Failed to close voting');
+    }
+  }
+
+  async function handleDeleteEvent(evt) {
+    const confirmed = await showConfirm(
+      `Are you sure you want to permanently delete "${evt.title}"? All associated ballots, category setups, and attendance records will be removed.`,
+      {
+        title: 'Delete Event',
+        confirmText: 'Delete Permanently',
+        cancelText: 'Keep Event',
+      }
+    );
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/api/events/${evt.id}`);
+      loadEvents();
+    } catch (err) {
+      showError(err.message || 'Failed to delete event');
     }
   }
 
@@ -130,7 +162,7 @@ export default function EventManagement({ onSelectEventForQR }) {
       setIsEnrollOpen(false);
       loadEvents();
     } catch (err) {
-      alert(err.message || 'Failed to update member eligibility');
+      showError(err.message || 'Failed to update member eligibility');
     }
   }
 
@@ -142,7 +174,7 @@ export default function EventManagement({ onSelectEventForQR }) {
       setCategoryName('');
       loadEvents();
     } catch (err) {
-      alert(err.message || 'Failed to add category');
+      showError(err.message || 'Failed to add category');
     }
   }
 
@@ -285,11 +317,20 @@ export default function EventManagement({ onSelectEventForQR }) {
                 {evt.status === 'active' && (
                   <button
                     onClick={() => handleCloseEarly(evt.id)}
-                    className="ml-auto px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-xs font-medium text-red-700 transition-colors flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-xs font-medium text-red-700 transition-colors flex items-center gap-1"
                   >
                     <StopCircle className="w-3.5 h-3.5" /> Close Early
                   </button>
                 )}
+
+                <button
+                  onClick={() => handleDeleteEvent(evt)}
+                  title="Delete Event"
+                  className="ml-auto px-2.5 py-1.5 rounded-lg hover:bg-red-50 text-xs font-medium text-brand-secondary hover:text-red-600 transition-colors flex items-center gap-1 border border-transparent hover:border-red-200"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
               </div>
             </div>
           ))
@@ -351,7 +392,7 @@ export default function EventManagement({ onSelectEventForQR }) {
             </div>
           </div>
           <p className="text-[11px] text-brand-secondary">
-            Default categories: <strong>Best Dressing</strong> and <strong>Best Speech</strong>. Additional categories can be added once created.
+            Default categories: <strong>Diwali Style Icon</strong> and <strong>Sparkling Speaker</strong>. Additional categories can be added once created.
           </p>
           <button
             type="submit"

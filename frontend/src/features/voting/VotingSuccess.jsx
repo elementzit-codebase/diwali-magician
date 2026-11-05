@@ -63,7 +63,7 @@ export default function VotingSuccess({
           Thank You, {voterName}!
         </h1>
         <p className="text-xs text-brand-secondary leading-relaxed px-4">
-          Your confidential ballot for <strong>{eventTitle}</strong> has been securely logged.
+          Your confidential ballot for <strong>{eventTitle}</strong> event has been securely logged.
         </p>
       </header>
 

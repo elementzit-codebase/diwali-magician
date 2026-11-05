@@ -53,7 +53,7 @@ export async function getEventById(id) {
   return event;
 }
 
-export async function createEvent({ title, description, durationMinutes = 5, startAt, endAt, categories = ['Best Dressing', 'Best Speech'], adminId }) {
+export async function createEvent({ title, description, durationMinutes = 5, startAt, endAt, categories = ['Diwali Style Icon', 'Sparkling Speaker'], adminId }) {
   const rawToken = generateSecureToken(32);
   const tokenHash = hashToken(rawToken);
 
@@ -276,4 +276,13 @@ export async function addCategory(eventId, name) {
     client.release();
   }
 }
+
+export async function deleteEvent(id) {
+  const res = await query(`DELETE FROM events WHERE id = $1 RETURNING id, title`, [id]);
+  if (res.rowCount === 0) {
+    throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
+  }
+  return res.rows[0];
+}
+
 

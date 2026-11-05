@@ -9,6 +9,7 @@ import {
   registerEventMembers,
   getEventMembers,
   addCategory,
+  deleteEvent,
 } from './events.service.js';
 import { requireAdminAuth } from '../../middleware/adminAuth.js';
 import { validate } from '../../middleware/validate.js';
@@ -79,6 +80,15 @@ router.put('/:id', validate(updateEventSchema), async (req, res, next) => {
   try {
     const event = await updateEvent(req.params.id, req.body);
     res.json({ message: 'Event updated successfully', event });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/:id', validate(eventIdParamSchema), async (req, res, next) => {
+  try {
+    const event = await deleteEvent(req.params.id);
+    res.json({ message: 'Event deleted successfully', event });
   } catch (err) {
     next(err);
   }

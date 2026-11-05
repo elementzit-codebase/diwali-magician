@@ -338,10 +338,10 @@ export default function DisplayStage() {
       </header>
 
       {/* Center Display Body */}
-      <main className="flex-1 flex flex-col items-center justify-center max-w-6xl mx-auto w-full space-y-6">
-        {/* Countdown Header */}
-        <div className="w-full max-w-2xl bg-white rounded-3xl p-5 sm:p-6 border border-brand-border shadow-sm text-center">
-          {isVotingActive ? (
+      <main className="flex-1 flex flex-col items-center justify-center max-w-6xl mx-auto w-full space-y-4">
+        {/* Countdown Header: Only shown while voting is active or scheduled */}
+        {isVotingActive ? (
+          <div className="w-full max-w-2xl bg-white rounded-3xl p-5 sm:p-6 border border-brand-border shadow-sm text-center">
             <CountdownTimer
               targetDate={eventData.end_at}
               label="Active Voting Concludes In"
@@ -353,25 +353,14 @@ export default function DisplayStage() {
                 }
               }}
             />
-          ) : isVotingConcluded ? (
-            <div className="space-y-3 py-1">
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-bold shadow-xs">
-                <Sparkles className="w-4 h-4 text-emerald-600 animate-spin" />
-                Voting Concluded — Official Winners Revealed!
-              </div>
-
-              {loadingWinners && (
-                <div className="text-xs text-brand-secondary py-1 flex items-center justify-center gap-2">
-                  <RefreshCw className="w-4 h-4 animate-spin text-brand-gold" /> Loading official winners...
-                </div>
-              )}
-            </div>
-          ) : (
+          </div>
+        ) : !isVotingConcluded ? (
+          <div className="w-full max-w-2xl bg-white rounded-3xl p-5 sm:p-6 border border-brand-border shadow-sm text-center">
             <div className="text-xs text-brand-secondary">
               Awaiting host to activate voting countdown
             </div>
-          )}
-        </div>
+          </div>
+        ) : null}
 
         {/* Dynamic Poster Display: Switches Automatically from QR Poster to Winner Template Poster */}
         <div className="w-full max-w-5xl flex justify-center">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api.js';
 import CountdownTimer from '../../components/CountdownTimer.jsx';
+import { usePopup } from '../../components/PopupModal.jsx';
 import {
   QrCode,
   Copy,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function QRManagement({ preselectedEventId }) {
+  const { showConfirm, showError } = usePopup();
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(preselectedEventId || '');
   const [tokenData, setTokenData] = useState(null);
@@ -129,7 +131,7 @@ export default function QRManagement({ preselectedEventId }) {
       // Open clean stage presentation display (TV/Monitor) in a new tab
       window.open(`/stage?eventId=${eventId}`, '_blank');
     } catch (err) {
-      alert(err.message || 'Failed to start voting');
+      showError(err.message || 'Failed to start voting');
     } finally {
       setStartingVoting(false);
     }
@@ -137,13 +139,11 @@ export default function QRManagement({ preselectedEventId }) {
 
   async function handleForceRegenerate() {
     if (!selectedEventId) return;
-    if (
-      !window.confirm(
-        'WARNING: Regenerating this QR code will permanently invalidate all previously printed posters and badges for this event! Are you sure you want to replace it?'
-      )
-    ) {
-      return;
-    }
+    const confirmed = await showConfirm(
+      'WARNING: Regenerating this QR code will permanently invalidate all previously printed posters and badges for this event! Are you sure you want to replace it?',
+      { title: 'Regenerate Event QR', confirmText: 'Regenerate QR' }
+    );
+    if (!confirmed) return;
 
     setLoading(true);
     setMessage('');
@@ -152,7 +152,7 @@ export default function QRManagement({ preselectedEventId }) {
       setTokenData(res);
       setMessage('New QR code generated successfully. Previous tokens revoked.');
     } catch (err) {
-      alert(err.message || 'Failed to regenerate QR code');
+      showError(err.message || 'Failed to regenerate QR code');
     } finally {
       setLoading(false);
     }
@@ -160,13 +160,11 @@ export default function QRManagement({ preselectedEventId }) {
 
   async function handleRevoke() {
     if (!selectedEventId) return;
-    if (
-      !window.confirm(
-        'Revoking access will immediately prevent anyone from loading the voting page via this QR code. Continue?'
-      )
-    ) {
-      return;
-    }
+    const confirmed = await showConfirm(
+      'Revoking access will immediately prevent anyone from loading the voting page via this QR code. Continue?',
+      { title: 'Revoke QR Access', confirmText: 'Revoke Access' }
+    );
+    if (!confirmed) return;
 
     setLoading(true);
     try {
@@ -175,7 +173,7 @@ export default function QRManagement({ preselectedEventId }) {
       setTemplatedImageSrc(null);
       setMessage('Event QR access has been permanently revoked.');
     } catch (err) {
-      alert(err.message || 'Failed to revoke QR code');
+      showError(err.message || 'Failed to revoke QR code');
     } finally {
       setLoading(false);
     }

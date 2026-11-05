@@ -6,9 +6,11 @@ import NameSelection from './NameSelection.jsx';
 import CandidateSelection from './CandidateSelection.jsx';
 import BallotReview from './BallotReview.jsx';
 import VotingSuccess from './VotingSuccess.jsx';
+import { usePopup } from '../../components/PopupModal.jsx';
 import { AlertCircle, QrCode } from 'lucide-react';
 
 export default function MemberVotingFlow() {
+  const { showError } = usePopup();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
@@ -69,7 +71,7 @@ export default function MemberVotingFlow() {
       if (err.code === 'ALREADY_VOTED') {
         setStep('already-voted');
       } else {
-        alert(err.message || 'Failed to establish voting session');
+        showError(err.message || 'Failed to establish voting session');
       }
     } finally {
       setLoading(false);

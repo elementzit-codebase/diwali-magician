@@ -6,6 +6,7 @@ import AdminPortal from '../features/admin/AdminPortal.jsx';
 import MemberVotingFlow from '../features/voting/MemberVotingFlow.jsx';
 import PublicWinnerPresentation from '../features/results/PublicWinnerPresentation.jsx';
 import DisplayStage from '../features/admin/DisplayStage.jsx';
+import { PopupProvider } from '../components/PopupModal.jsx';
 import { Award, QrCode } from 'lucide-react';
 
 function AdminRouteGuard() {
@@ -70,17 +71,19 @@ function MemberLandingPlaceholder() {
 
 export default function App() {
   return (
-    <AdminAuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MemberLandingPlaceholder />} />
-          <Route path="/vote" element={<MemberVotingFlow />} />
-          <Route path="/results" element={<PublicWinnerPresentation />} />
-          <Route path="/stage" element={<DisplayStage />} />
-          <Route path="/admin/*" element={<AdminRouteGuard />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AdminAuthProvider>
+    <PopupProvider>
+      <AdminAuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<MemberLandingPlaceholder />} />
+            <Route path="/vote" element={<MemberVotingFlow />} />
+            <Route path="/results" element={<PublicWinnerPresentation />} />
+            <Route path="/stage" element={<DisplayStage />} />
+            <Route path="/admin/*" element={<AdminRouteGuard />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AdminAuthProvider>
+    </PopupProvider>
   );
 }

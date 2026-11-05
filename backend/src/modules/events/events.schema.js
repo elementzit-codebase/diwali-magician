@@ -14,7 +14,7 @@ export const createEventSchema = z.object({
     categories: z
       .array(z.string().trim().min(2))
       .optional()
-      .default(['Best Dressing', 'Best Speech']),
+      .default(['Diwali Style Icon', 'Sparkling Speaker']),
   }),
 });
 
