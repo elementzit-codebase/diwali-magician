@@ -61,13 +61,15 @@ export async function createEvent({ title, description, durationMinutes = 5, sta
   try {
     await client.query('BEGIN');
 
+    const now = new Date();
+    const mins = parseInt(durationMinutes, 10) || 5;
+
     // Default status is draft (waiting for admin to click Start)
     let initialStatus = 'draft';
-    let finalStart = startAt || null;
-    let finalEnd = endAt || null;
+    let finalStart = startAt ? new Date(startAt) : now;
+    let finalEnd = endAt ? new Date(endAt) : new Date(finalStart.getTime() + mins * 60 * 1000);
 
     if (startAt && endAt) {
-      const now = new Date();
       const s = new Date(startAt);
       const e = new Date(endAt);
       if (now >= s && now < e) {
@@ -79,11 +81,15 @@ export async function createEvent({ title, description, durationMinutes = 5, sta
       }
     }
 
+    if (finalEnd <= finalStart) {
+      finalEnd = new Date(finalStart.getTime() + mins * 60 * 1000);
+    }
+
     const eventRes = await client.query(
       `INSERT INTO events (title, description, start_at, end_at, duration_minutes, status, access_token_hash, raw_access_token, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id, title, description, start_at, end_at, duration_minutes, status, raw_access_token, created_at`,
-      [title, description || null, finalStart, finalEnd, durationMinutes, initialStatus, tokenHash, rawToken, adminId]
+      [title, description || null, finalStart.toISOString(), finalEnd.toISOString(), mins, initialStatus, tokenHash, rawToken, adminId]
     );
     const event = eventRes.rows[0];
 
