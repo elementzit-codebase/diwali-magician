@@ -1,52 +1,80 @@
 import React from 'react';
-import { Award, ShieldCheck, QrCode } from 'lucide-react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AdminAuthProvider, useAdminAuth } from '../hooks/useAdminAuth.jsx';
+import AdminAuthPage from '../features/auth/AdminAuthPage.jsx';
+import AdminPortal from '../features/admin/AdminPortal.jsx';
+import { Award, QrCode } from 'lucide-react';
 
-export default function App() {
+function AdminRouteGuard() {
+  const { admin, loading, setupRequired } = useAdminAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-canvas text-xs text-brand-secondary">
+        Verifying administrator session...
+      </div>
+    );
+  }
+
+  if (setupRequired || !admin) {
+    return <AdminAuthPage />;
+  }
+
+  return <AdminPortal />;
+}
+
+function MemberLandingPlaceholder() {
   return (
-    <main className="min-h-screen flex flex-col justify-between p-4 sm:p-8 max-w-md mx-auto">
-      <header className="text-center pt-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white shadow-sm border border-brand-border mb-4">
-          <Award className="w-7 h-7 text-brand-red" />
+    <main className="min-h-screen flex flex-col justify-between p-6 max-w-md mx-auto text-center">
+      <header className="pt-10 space-y-3">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-sm border border-brand-border">
+          <Award className="w-8 h-8 text-brand-red" />
         </div>
-        <h1 className="font-serif-title text-2xl sm:text-3xl font-bold tracking-tight text-brand-charcoal">
-          Annual Gala Awards
+        <h1 className="font-serif-title text-2xl font-bold text-brand-charcoal">
+          Gala Awards Evening
         </h1>
-        <p className="text-sm text-brand-secondary mt-1">
-          Exclusive Event Voting
+        <p className="text-xs text-brand-secondary">
+          Premium Event Voting Experience
         </p>
       </header>
 
-      <section className="bg-white rounded-2xl p-6 border border-brand-border shadow-sm my-8 text-center">
-        <div className="flex items-center justify-center gap-2 mb-4 text-xs font-semibold uppercase tracking-wider text-brand-gold">
-          <ShieldCheck className="w-4 h-4" /> Single-Port Architecture Active
+      <div className="bg-white rounded-3xl p-6 border border-brand-border shadow-sm my-8 space-y-4">
+        <div className="w-12 h-12 rounded-full bg-brand-canvas mx-auto flex items-center justify-center text-brand-gold">
+          <QrCode className="w-6 h-6" />
         </div>
-        <p className="text-sm text-brand-charcoal mb-6 leading-relaxed">
-          Welcome to the mobile voting experience. Scan the event QR code or access the administrator portal.
+        <h2 className="font-serif-title text-base font-bold text-brand-charcoal">
+          Scan Event QR Code
+        </h2>
+        <p className="text-xs text-brand-secondary leading-relaxed">
+          Please scan the common event QR code displayed at your venue or table to cast your selections for Best Dressing and Best Speech.
         </p>
-        <div className="space-y-3">
+        <div className="pt-2">
           <a
             href="/admin"
-            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.98] text-white font-medium text-sm transition-all shadow-sm"
+            className="inline-block py-2.5 px-4 rounded-xl bg-brand-canvas hover:bg-brand-border/60 text-xs font-medium text-brand-charcoal transition-colors"
           >
-            Administrator Portal
+            Go to Admin Console →
           </a>
-          <button
-            onClick={async () => {
-              const res = await fetch('/api/health');
-              const data = await res.json();
-              alert(`Backend Health: ${data.status} | Mode: ${data.mode}`);
-            }}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-brand-border hover:bg-brand-canvas active:scale-[0.98] text-brand-charcoal font-medium text-sm transition-all"
-          >
-            <QrCode className="w-4 h-4 text-brand-secondary" /> Test Single-Port Backend API
-          </button>
         </div>
-      </section>
+      </div>
 
-      <footer className="text-center pb-6 text-xs text-brand-secondary">
+      <footer className="text-[11px] text-brand-secondary pb-4">
         Secured with confidential ballot architecture
       </footer>
     </main>
   );
 }
 
+export default function App() {
+  return (
+    <AdminAuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MemberLandingPlaceholder />} />
+          <Route path="/admin/*" element={<AdminRouteGuard />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AdminAuthProvider>
+  );
+}
