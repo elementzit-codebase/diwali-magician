@@ -28,9 +28,10 @@ export default function CountdownTimer({
     // Check initially
     const initial = calculateTimeLeft();
     setTimeLeft(initial);
-    if (initial.expired && !hasTriggeredExpire.current) {
-      hasTriggeredExpire.current = true;
-      if (onExpire) onExpire();
+
+    // If already expired upon mounting, do not trigger onExpire
+    // (Prevents infinite re-fetch loops if the target date is already in the past)
+    if (initial.expired) {
       return;
     }
 

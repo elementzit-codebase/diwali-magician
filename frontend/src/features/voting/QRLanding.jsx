@@ -1,9 +1,10 @@
 import React from 'react';
-import { Award, Clock, ArrowRight, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Award, Clock, ArrowRight, ShieldAlert, Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
 import CountdownTimer from '../../components/CountdownTimer.jsx';
 
 export default function QRLanding({ event, onStartVoting, onRefresh }) {
   const isAvailable = event.votingAvailability === 'open';
+  const isFutureScheduled = Boolean(event.startAt && new Date(event.startAt).getTime() > Date.now());
 
   return (
     <div className="min-h-screen flex flex-col justify-between p-5 max-w-md mx-auto">
@@ -93,18 +94,41 @@ export default function QRLanding({ event, onStartVoting, onRefresh }) {
               </p>
             </div>
 
-            {/* Luxurious Countdown Display */}
-            <div className="p-4 rounded-2xl bg-brand-canvas/60 border border-brand-border/80">
-              <CountdownTimer
-                targetDate={event.startAt}
-                label="Countdown to Voting"
-                variant="luxurious"
-                onExpire={() => {
-                  if (onRefresh) onRefresh();
-                  else window.location.reload();
-                }}
-              />
-            </div>
+            {/* Luxurious Countdown Display or Waiting Notice */}
+            {isFutureScheduled ? (
+              <div className="p-4 rounded-2xl bg-brand-canvas/60 border border-brand-border/80">
+                <CountdownTimer
+                  targetDate={event.startAt}
+                  label="Countdown to Voting"
+                  variant="luxurious"
+                  onExpire={() => {
+                    if (onRefresh) onRefresh();
+                    else window.location.reload();
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-brand-canvas/60 border border-brand-border/80 text-center space-y-3">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  Awaiting Host to Activate Voting
+                </div>
+                <p className="text-xs text-brand-secondary">
+                  The event is scheduled and will unlock as soon as the administrator opens voting.
+                </p>
+                {onRefresh && (
+                  <div>
+                    <button
+                      onClick={onRefresh}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-brand-border text-xs font-medium text-brand-charcoal hover:bg-brand-canvas shadow-xs transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-brand-gold" />
+                      Check Status
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Step-by-Step Preview */}
             <div className="text-left bg-brand-canvas/50 rounded-2xl p-4 border border-brand-border/60 space-y-2">

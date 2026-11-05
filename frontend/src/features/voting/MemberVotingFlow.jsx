@@ -34,8 +34,8 @@ export default function MemberVotingFlow() {
     }
   }, [token]);
 
-  async function loadEventFromToken(rawToken) {
-    setLoading(true);
+  async function loadEventFromToken(rawToken, silent = false) {
+    if (!silent) setLoading(true);
     try {
       const data = await api.get(`/api/qr/access/${encodeURIComponent(rawToken)}`);
       setEventData(data.event);
@@ -44,7 +44,7 @@ export default function MemberVotingFlow() {
       setStep('error');
       setErrorMessage(err.message || 'Invalid or expired event QR code');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -173,7 +173,7 @@ export default function MemberVotingFlow() {
       <QRLanding
         event={eventData}
         onStartVoting={() => setStep('name-select')}
-        onRefresh={() => loadEventFromToken(token)}
+        onRefresh={() => loadEventFromToken(token, true)}
       />
     );
   }

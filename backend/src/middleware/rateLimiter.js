@@ -1,8 +1,10 @@
 import rateLimit from 'express-rate-limit';
+import { config } from '../config/index.js';
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 requests per window
+  max: config.isProduction ? 15 : 100,
+  skip: () => !config.isProduction,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -13,7 +15,8 @@ export const authLimiter = rateLimit({
 
 export const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 1520, // 120 requests per minute
+  max: config.isProduction ? 300 : 5000,
+  skip: () => !config.isProduction,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -21,4 +24,5 @@ export const apiLimiter = rateLimit({
     code: 'RATE_LIMIT_EXCEEDED',
   },
 });
+
 
