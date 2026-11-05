@@ -35,7 +35,7 @@ function MemberLandingPlaceholder() {
           <Award className="w-8 h-8 text-brand-red" />
         </div>
         <h1 className="font-serif-title text-2xl font-bold text-brand-charcoal">
-          Awards Evening
+          Diwali Event
         </h1>
         <p className="text-xs text-brand-secondary">
           Premium Event Voting Experience
@@ -75,11 +75,11 @@ export default function App() {
       <AdminAuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<MemberLandingPlaceholder />} />
+            <Route path="/" element={<AdminRouteGuard />} />
+            <Route path="/admin/*" element={<AdminRouteGuard />} />
             <Route path="/vote" element={<MemberVotingFlow />} />
             <Route path="/results" element={<PublicWinnerPresentation />} />
             <Route path="/stage" element={<DisplayStage />} />
-            <Route path="/admin/*" element={<AdminRouteGuard />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

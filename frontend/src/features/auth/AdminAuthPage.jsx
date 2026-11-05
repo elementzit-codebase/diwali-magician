@@ -130,12 +130,9 @@ export default function AdminAuthPage() {
         </form>
 
         <div className="mt-8 pt-6 border-t border-brand-border text-center">
-          <a
-            href="/"
-            className="text-xs text-brand-secondary hover:text-brand-charcoal transition-colors"
-          >
-            ← Return to Event Member View
-          </a>
+          <p className="text-[11px] text-brand-secondary">
+            Private Event Management & Balloting System
+          </p>
         </div>
       </div>
     </div>

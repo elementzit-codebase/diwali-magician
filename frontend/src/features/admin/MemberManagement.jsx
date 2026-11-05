@@ -32,10 +32,10 @@ export default function MemberManagement() {
   const [memberCode, setMemberCode] = useState('');
   const [fullName, setFullName] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [csvContent, setCsvContent] = useState('');
   const [actionError, setActionError] = useState('');
   const [importResult, setImportResult] = useState(null);
   const [uploadingExcel, setUploadingExcel] = useState(false);
+  const [pendingImport, setPendingImport] = useState(null); // { validMembers, duplicates }
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -110,6 +110,7 @@ export default function MemberManagement() {
 
     setActionError('');
     setImportResult(null);
+    setPendingImport(null);
     setUploadingExcel(true);
 
     try {
@@ -130,7 +131,7 @@ export default function MemberManagement() {
         startIndex = 1;
       }
 
-      const parsedMembers = [];
+      const fileRows = [];
       for (let i = startIndex; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
@@ -139,17 +140,49 @@ export default function MemberManagement() {
         const nameVal = row[1] !== undefined && row[1] !== null ? String(row[1]).trim() : '';
 
         if (codeVal && nameVal) {
-          parsedMembers.push({ memberCode: codeVal, fullName: nameVal });
+          fileRows.push({ memberCode: codeVal, fullName: nameVal, rowNum: i + 1 });
         }
       }
 
-      if (parsedMembers.length === 0) {
+      if (fileRows.length === 0) {
         throw new Error('No valid member records found. Please ensure Column A is Member Code and Column B is Name.');
       }
 
-      const res = await api.post('/api/members/import-csv', { members: parsedMembers });
-      setImportResult(res);
-      loadMembers();
+      // Fetch all existing members from DB to compare duplicates
+      const existingData = await api.get('/api/members/all-codes-and-names');
+      const existingCodes = new Set((existingData.members || []).map(m => m.member_code.toUpperCase()));
+      const existingNames = new Set((existingData.members || []).map(m => m.full_name.trim().toLowerCase()));
+
+      const duplicates = [];
+      const validMembers = [];
+      const seenInFileCodes = new Set();
+
+      for (const item of fileRows) {
+        const codeUpper = item.memberCode.toUpperCase();
+        const nameLower = item.fullName.trim().toLowerCase();
+
+        let dupReason = '';
+        if (existingCodes.has(codeUpper)) {
+          dupReason = `Member code "${item.memberCode}" already exists in directory`;
+        } else if (existingNames.has(nameLower)) {
+          dupReason = `Member name "${item.fullName}" already exists in directory`;
+        } else if (seenInFileCodes.has(codeUpper)) {
+          dupReason = `Duplicate member code "${item.memberCode}" repeated inside this Excel file`;
+        }
+
+        if (dupReason) {
+          duplicates.push({ ...item, reason: dupReason });
+        } else {
+          validMembers.push({ memberCode: item.memberCode, fullName: item.fullName });
+          seenInFileCodes.add(codeUpper);
+        }
+      }
+
+      setPendingImport({
+        totalInFile: fileRows.length,
+        validMembers,
+        duplicates,
+      });
     } catch (err) {
       setActionError(err.message || 'Failed to process Excel file');
     } finally {
@@ -158,16 +191,19 @@ export default function MemberManagement() {
     }
   }
 
-  async function handleImportCsv(e) {
-    e.preventDefault();
+  async function handleConfirmImport() {
+    if (!pendingImport || pendingImport.validMembers.length === 0) return;
+    setUploadingExcel(true);
     setActionError('');
-    setImportResult(null);
     try {
-      const res = await api.post('/api/members/import-csv', { csvContent });
+      const res = await api.post('/api/members/import-csv', { members: pendingImport.validMembers });
       setImportResult(res);
+      setPendingImport(null);
       loadMembers();
     } catch (err) {
-      setActionError(err.message || 'CSV Import failed');
+      setActionError(err.message || 'Import failed');
+    } finally {
+      setUploadingExcel(false);
     }
   }
 
@@ -200,7 +236,7 @@ export default function MemberManagement() {
         <div>
           <h2 className="font-serif-title text-2xl font-bold text-brand-charcoal">Member Directory</h2>
           <p className="text-xs text-brand-secondary mt-0.5">
-            Registered event attendees (~50 members) eligible for candidate nominations and ballots.
+            Registered event attendees eligible for candidate nominations and ballots.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -212,14 +248,14 @@ export default function MemberManagement() {
           </button>
           <button
             onClick={() => {
-              setCsvContent('');
+              setPendingImport(null);
               setImportResult(null);
               setActionError('');
               setIsImportOpen(true);
             }}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-brand-border hover:bg-white text-brand-charcoal text-xs font-medium transition-all"
           >
-            <Upload className="w-4 h-4 text-brand-secondary" /> Import Excel / CSV
+            <Upload className="w-4 h-4 text-brand-secondary" /> Upload Excel
           </button>
         </div>
       </div>
@@ -394,85 +430,127 @@ export default function MemberManagement() {
         </form>
       </Modal>
 
-      {/* CSV / Excel Import Modal */}
+      {/* Excel Upload Modal */}
       <Modal
         isOpen={isImportOpen}
-        onClose={() => setIsImportOpen(false)}
-        title="Import Members from Excel or CSV"
+        onClose={() => {
+          setIsImportOpen(false);
+          setPendingImport(null);
+        }}
+        title="Upload Members via Excel"
+        maxWidth="max-w-lg"
       >
-        <div className="space-y-5">
+        <div className="space-y-4">
           {actionError && (
             <div className="p-3 rounded-xl bg-red-50 text-red-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{actionError}</span>
             </div>
           )}
+
           {importResult && (
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-700 text-xs">
-              Successfully imported {importResult.importedCount} members.
-              {importResult.errors?.length > 0 && (
-                <div className="mt-2 text-red-600">
-                  {importResult.errors.length} rows skipped due to duplicate code or format errors.
-                </div>
-              )}
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs space-y-1">
+              <div className="font-bold flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                Successfully imported {importResult.importedCount} members into directory!
+              </div>
             </div>
           )}
 
-          {/* Option 1: Direct Excel/CSV File Upload */}
-          <div className="p-4 rounded-2xl bg-brand-canvas/70 border border-brand-border space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-brand-charcoal">
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-              Upload Excel (.xlsx, .xls) or CSV File
-            </div>
-            <p className="text-[11px] text-brand-secondary">
-              Directly select your Excel sheet. Column A must be <strong>Member Code</strong> and Column B must be <strong>Full Name</strong>.
-            </p>
-            <div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept=".xlsx, .xls, .csv"
-                onChange={handleFileUpload}
-                disabled={uploadingExcel}
-                className="hidden"
-                id="excelFileInput"
-              />
-              <label
-                htmlFor="excelFileInput"
-                className={`w-full py-3 px-4 rounded-xl bg-white border border-dashed border-brand-border hover:border-brand-red flex items-center justify-center gap-2 text-xs font-semibold text-brand-charcoal cursor-pointer shadow-xs transition-all ${
-                  uploadingExcel ? 'opacity-60 cursor-not-allowed' : ''
-                }`}
-              >
-                <Upload className="w-4 h-4 text-brand-red" />
-                {uploadingExcel ? 'Reading & Uploading Excel...' : 'Choose Excel / CSV File'}
-              </label>
-            </div>
-          </div>
+          {/* Step 1: File selector */}
+          {!pendingImport && (
+            <div className="p-5 rounded-2xl bg-brand-canvas/70 border border-brand-border space-y-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-white border border-brand-border text-emerald-600 mx-auto flex items-center justify-center shadow-xs">
+                <FileSpreadsheet className="w-6 h-6" />
+              </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 border-t border-brand-border/60"></div>
-            <span className="text-[10px] uppercase font-bold text-brand-secondary">Or Paste CSV Text</span>
-            <div className="flex-1 border-t border-brand-border/60"></div>
-          </div>
+              <div>
+                <h4 className="text-sm font-bold text-brand-charcoal">Select Excel Spreadsheet</h4>
+                <p className="text-[11px] text-brand-secondary mt-1">
+                  Supports <strong>.xlsx</strong> and <strong>.xls</strong> formats.<br />
+                  Column A: <strong>Member Code</strong> (e.g. MEM-001) • Column B: <strong>Full Name</strong>
+                </p>
+              </div>
 
-          <form onSubmit={handleImportCsv} className="space-y-4">
-            <div>
-              <textarea
-                rows="5"
-                value={csvContent}
-                onChange={(e) => setCsvContent(e.target.value)}
-                placeholder={`MEM-001,Alexander Wright\nMEM-002,Beatrice Montgomery`}
-                className="w-full p-3 rounded-xl border border-brand-border text-xs font-mono focus:outline-none focus:border-brand-red"
-              />
+              <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept=".xlsx, .xls"
+                  onChange={handleFileUpload}
+                  disabled={uploadingExcel}
+                  className="hidden"
+                  id="excelFileInput"
+                />
+                <label
+                  htmlFor="excelFileInput"
+                  className={`w-full py-3.5 px-4 rounded-xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.99] text-white flex items-center justify-center gap-2 text-xs font-bold cursor-pointer shadow-md transition-all ${
+                    uploadingExcel ? 'opacity-60 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <Upload className="w-4 h-4 text-white" />
+                  {uploadingExcel ? 'Reading & Checking Duplicates...' : 'Choose Excel File'}
+                </label>
+              </div>
             </div>
-            <button
-              type="submit"
-              disabled={!csvContent.trim()}
-              className="w-full py-2.5 rounded-xl bg-brand-charcoal hover:bg-black text-white text-xs font-medium transition-all shadow-sm disabled:opacity-50"
-            >
-              Execute Pasted CSV Import
-            </button>
-          </form>
+          )}
+
+          {/* Step 2: Duplicate Review & Confirmation */}
+          {pendingImport && (
+            <div className="space-y-4">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                  <div className="text-lg font-bold text-emerald-700">{pendingImport.validMembers.length}</div>
+                  <div className="text-[10px] font-semibold uppercase text-emerald-600">New Members Ready</div>
+                </div>
+                <div className={`p-3 rounded-xl border ${pendingImport.duplicates.length > 0 ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-brand-canvas border-brand-border text-brand-secondary'}`}>
+                  <div className="text-lg font-bold">{pendingImport.duplicates.length}</div>
+                  <div className="text-[10px] font-semibold uppercase">Duplicates Found</div>
+                </div>
+              </div>
+
+              {/* Duplicates Notice & List */}
+              {pendingImport.duplicates.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800">
+                    <AlertCircle className="w-4 h-4 text-amber-600" />
+                    <span>The following {pendingImport.duplicates.length} duplicate(s) were found and will be skipped:</span>
+                  </div>
+                  <div className="max-h-40 overflow-y-auto rounded-xl border border-amber-200 bg-amber-50/50 p-2 text-[11px] space-y-1.5 divide-y divide-amber-200/50">
+                    {pendingImport.duplicates.map((dup, idx) => (
+                      <div key={idx} className="pt-1.5 first:pt-0 flex items-start justify-between gap-2">
+                        <div>
+                          <strong className="text-brand-charcoal">{dup.fullName}</strong>{' '}
+                          <span className="font-mono text-[10px] text-brand-secondary">({dup.memberCode})</span>
+                        </div>
+                        <span className="text-[10px] font-medium text-amber-700 text-right">{dup.reason}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPendingImport(null)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-brand-border text-xs font-semibold text-brand-charcoal hover:bg-brand-canvas transition-colors"
+                >
+                  Choose Different File
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmImport}
+                  disabled={uploadingExcel || pendingImport.validMembers.length === 0}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.98] text-white text-xs font-bold shadow-md transition-all disabled:opacity-50"
+                >
+                  {uploadingExcel ? 'Importing...' : `Confirm & Add ${pendingImport.validMembers.length} Members`}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

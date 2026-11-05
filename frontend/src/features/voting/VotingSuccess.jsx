@@ -191,9 +191,7 @@ export default function VotingSuccess({
       </main>
 
       <footer className="pb-6 space-y-1 text-center">
-        <div className="text-[10px] text-brand-gold font-serif-title font-semibold">
-          Enjoy the Awards Evening
-        </div>
+       
         <div className="text-[10px] text-brand-secondary">
           Secured with confidential ballot architecture
         </div>

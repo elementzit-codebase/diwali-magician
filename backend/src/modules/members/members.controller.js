@@ -10,6 +10,7 @@ import {
   getNextMemberCode,
   deleteMember,
 } from './members.service.js';
+import { query } from '../../database/pool.js';
 import { requireAdminAuth } from '../../middleware/adminAuth.js';
 import { validate } from '../../middleware/validate.js';
 import {
@@ -39,6 +40,15 @@ router.get('/next-code', async (req, res, next) => {
   try {
     const nextCode = await getNextMemberCode();
     res.json({ nextCode });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/all-codes-and-names', async (req, res, next) => {
+  try {
+    const data = await query('SELECT member_code, full_name FROM members');
+    res.json({ members: data.rows });
   } catch (err) {
     next(err);
   }
