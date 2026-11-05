@@ -210,49 +210,115 @@ export default function DisplayStage() {
           return;
         }
 
-        // Combine all names with comma if tie: e.g. "Alwyn, Bhavya"
-        const combinedNames = winners.map(w => w.name).join(', ');
         const votes = winners[0]?.votes ?? 0;
         const isTie = winners.length > 1;
-
-        // Dynamically scale font size according to name string length
-        let nameFontSize = 110;
-        if (combinedNames.length > 35) {
-          nameFontSize = 60;
-        } else if (combinedNames.length > 25) {
-          nameFontSize = 74;
-        } else if (combinedNames.length > 18) {
-          nameFontSize = 88;
-        } else if (combinedNames.length > 12) {
-          nameFontSize = 100;
-        }
-
-        ctx.font = `bold ${nameFontSize}px "Plus Jakarta Sans", "Cinzel", "Playfair Display", serif`;
-        // Check text width against max box width
-        let measuredWidth = ctx.measureText(combinedNames).width;
-        if (measuredWidth > card.maxWidth) {
-          const ratio = (card.maxWidth - 60) / measuredWidth;
-          nameFontSize = Math.max(48, Math.floor(nameFontSize * ratio));
-          ctx.font = `bold ${nameFontSize}px "Plus Jakarta Sans", "Cinzel", "Playfair Display", serif`;
-        }
-
-        // Vertical spacing: Name at centerY - offset, Vote Count clearly below it
-        const gap = Math.max(70, Math.floor(nameFontSize * 0.85));
-        const nameY = card.centerY - gap / 2;
-        const countY = card.centerY + gap / 2 + 25;
-
-        // Draw Winner Name(s)
-        ctx.fillStyle = '#1A1A1A';
-        ctx.fillText(combinedNames, card.centerX, nameY);
-
-        // Draw Vote Count / Tie indicator with proper spacing & size
         const voteLabel = votes === 1 ? '1 vote' : `${votes} votes`;
         const countText = isTie
           ? `★ Joint Winner (${voteLabel}) ★`
           : `(${voteLabel})`;
 
-        // Increased vote count font size for better visibility on stage & screen displays
-        const countFontSize = Math.min(80, Math.max(62, Math.floor(nameFontSize * 0.68)));
+        // Available vertical space in the box:
+        // Card box boundaries: left card.centerX - card.maxWidth/2 to centerX + card.maxWidth/2
+        const maxBoxWidth = card.maxWidth; // 1850px
+        const maxBoxHeight = 850; // Available vertical height inside white card
+
+        // Helper: split text into multiple lines given maxWidth and ctx.font
+        function getWrappedLines(textItems, fontSize, maxWidth) {
+          ctx.font = `bold ${fontSize}px "Plus Jakarta Sans", "Cinzel", "Playfair Display", serif`;
+          const lines = [];
+          let currentLine = '';
+
+          for (let i = 0; i < textItems.length; i++) {
+            const item = textItems[i];
+            const separator = i === textItems.length - 1 ? '' : ', ';
+            const testLine = currentLine ? `${currentLine}${item}${separator}` : `${item}${separator}`;
+            const testWidth = ctx.measureText(testLine.endsWith(', ') ? testLine.slice(0, -2) : testLine).width;
+
+            if (testWidth > maxWidth && currentLine) {
+              lines.push(currentLine.endsWith(', ') ? currentLine.slice(0, -2) : currentLine);
+              currentLine = `${item}${separator}`;
+            } else {
+              currentLine = testLine;
+            }
+          }
+          if (currentLine) {
+            lines.push(currentLine.endsWith(', ') ? currentLine.slice(0, -2) : currentLine);
+          }
+          return lines;
+        }
+
+        const winnerNames = winners.map(w => w.name);
+
+        // Always start with the largest possible font size (115px) and let it fit the available space
+        let nameFontSize = 115;
+        if (winners.length === 1) {
+          nameFontSize = 115;
+        } else if (winners.length === 2) {
+          nameFontSize = 96;
+        } else if (winners.length <= 4) {
+          nameFontSize = 86;
+        } else if (winners.length <= 8) {
+          nameFontSize = 74;
+        } else {
+          nameFontSize = 68;
+        }
+
+        let lines = [];
+        let countFontSize = 74;
+        let lineHeight = nameFontSize * 1.3;
+        let totalBlockHeight = 0;
+
+        // Scale down gracefully only when needed so text never overflows the box
+        while (nameFontSize >= 42) {
+          lines = getWrappedLines(winnerNames, nameFontSize, maxBoxWidth);
+          lineHeight = nameFontSize * 1.25;
+          countFontSize = Math.min(80, Math.max(50, Math.floor(nameFontSize * 0.76)));
+          const gap = Math.max(40, Math.floor(nameFontSize * 0.65));
+          totalBlockHeight = lines.length * lineHeight + gap + countFontSize;
+
+          if (totalBlockHeight <= maxBoxHeight) {
+            break;
+          }
+          nameFontSize -= 2;
+        }
+
+        // If very large number of ties (e.g. 15+ names), keep font at least 45-50px and show top tied names with "+X more"
+        if (totalBlockHeight > maxBoxHeight) {
+          nameFontSize = 54;
+          lineHeight = nameFontSize * 1.25;
+          countFontSize = 55;
+          const maxLines = Math.max(2, Math.floor((maxBoxHeight - countFontSize - 45) / lineHeight));
+          lines = getWrappedLines(winnerNames, nameFontSize, maxBoxWidth);
+          if (lines.length > maxLines) {
+            const shownLines = lines.slice(0, maxLines);
+            // Count names shown
+            const shownText = shownLines.join(' ');
+            let shownCount = 0;
+            winnerNames.forEach(n => {
+              if (shownText.includes(n)) shownCount++;
+            });
+            const remainingCount = winnerNames.length - shownCount;
+            if (remainingCount > 0) {
+              shownLines[shownLines.length - 1] += ` (+${remainingCount} more)`;
+            }
+            lines = shownLines;
+            totalBlockHeight = lines.length * lineHeight + 45 + countFontSize;
+          }
+        }
+
+        // Draw names centered vertically in the card
+        const startY = card.centerY - totalBlockHeight / 2 + lineHeight / 2;
+
+        ctx.fillStyle = '#1A1A1A';
+        ctx.font = `bold ${nameFontSize}px "Plus Jakarta Sans", "Cinzel", "Playfair Display", serif`;
+
+        lines.forEach((line, idx) => {
+          const lineY = startY + idx * lineHeight;
+          ctx.fillText(line, card.centerX, lineY);
+        });
+
+        // Draw Vote Count / Joint Winner tag below the names
+        const countY = startY + (lines.length - 1) * lineHeight + Math.max(45, Math.floor(nameFontSize * 0.8)) + countFontSize / 2;
         ctx.font = `bold ${countFontSize}px "Plus Jakarta Sans", sans-serif`;
         ctx.fillStyle = '#B32635'; // Luxury Red Accent
         ctx.fillText(countText, card.centerX, countY);
