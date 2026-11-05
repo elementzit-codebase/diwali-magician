@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../../services/api.js';
 import CountdownTimer from '../../components/CountdownTimer.jsx';
-import { Trophy, Crown, RefreshCw, Maximize2, Minimize2, Check } from 'lucide-react';
+import { Trophy, Crown, RefreshCw, Maximize2, Minimize2, Check, Sparkles } from 'lucide-react';
 
 export default function DisplayStage() {
   const [searchParams] = useSearchParams();
@@ -11,8 +11,10 @@ export default function DisplayStage() {
   const [eventData, setEventData] = useState(null);
   const [tokenData, setTokenData] = useState(null);
   const [posterSrc, setPosterSrc] = useState(null);
+  const [winnerPosterSrc, setWinnerPosterSrc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generatingPoster, setGeneratingPoster] = useState(false);
+  const [generatingWinnerPoster, setGeneratingWinnerPoster] = useState(false);
   const [winnersData, setWinnersData] = useState(null);
   const [loadingWinners, setLoadingWinners] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -56,6 +58,8 @@ export default function DisplayStage() {
     try {
       const res = await api.get(`/api/results/admin/${id}`);
       setWinnersData(res);
+      // Automatically render the official winner poster
+      renderWinnerPoster(res);
     } catch (err) {
       console.error('Failed to fetch winners:', err);
     } finally {
@@ -83,7 +87,6 @@ export default function DisplayStage() {
       qrImg.src = qrDataUrl;
 
       qrImg.onload = () => {
-        // Target frame geometry for Template BNI
         const boxX = 2570;
         const boxY = 310;
         const boxW = 2810;
@@ -128,6 +131,148 @@ export default function DisplayStage() {
     };
   }
 
+  // Composite winner names dynamically onto Wiiner template.png
+  function renderWinnerPoster(data) {
+    if (!data) return;
+    setGeneratingWinnerPoster(true);
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const winnerImg = new Image();
+    winnerImg.src = '/winner-template.png';
+
+    winnerImg.onload = () => {
+      canvas.width = winnerImg.naturalWidth || 5961;
+      canvas.height = winnerImg.naturalHeight || 3357;
+
+      ctx.drawImage(winnerImg, 0, 0);
+
+      // Support both results shape: results array (from /api/results/admin/:id) or categories array
+      const rawCategories = data.results || data.categories || [];
+
+      // Identify categories: Best Dressing (Diwali Style Icon) and Best Speech (Sparkling Speaker)
+      let dressingCat = rawCategories.find(c => {
+        const name = (c.categoryName || c.name || '').toLowerCase();
+        return name.includes('dress') || name.includes('style') || name.includes('icon');
+      });
+      let speechCat = rawCategories.find(c => {
+        const name = (c.categoryName || c.name || '').toLowerCase();
+        return name.includes('speech') || name.includes('speak');
+      });
+
+      // Fallbacks if named differently: use 1st for left, 2nd for right
+      if (!dressingCat && rawCategories.length > 0) dressingCat = rawCategories[0];
+      if (!speechCat && rawCategories.length > 1) speechCat = rawCategories[1];
+
+      function extractWinners(cat) {
+        if (!cat) return [];
+        if (Array.isArray(cat.winners) && cat.winners.length > 0) {
+          return cat.winners.map(w => ({
+            name: w.candidateName || w.fullName || w.name || 'Winner',
+            votes: w.votes || w.voteCount || 0,
+            isJoint: w.isJointWinner || cat.winners.length > 1
+          }));
+        }
+        return [];
+      }
+
+      const dressingWinners = extractWinners(dressingCat);
+      const speechWinners = extractWinners(speechCat);
+
+      // Card 1 (Left: Diwali Style Icon) geometry
+      const card1 = {
+        centerX: 2155,
+        startY: 1880,
+        availableHeight: 880,
+        maxWidth: 1850,
+      };
+
+      // Card 2 (Right: Sparkling Speaker) geometry
+      const card2 = {
+        centerX: 4435,
+        startY: 1880,
+        availableHeight: 880,
+        maxWidth: 1850,
+      };
+
+      function drawWinnersList(winners, card) {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        if (winners.length === 0) {
+          ctx.font = 'italic 500 65px "Plus Jakarta Sans", sans-serif';
+          ctx.fillStyle = '#8C8C8C';
+          ctx.fillText('No Votes Recorded', card.centerX, card.startY + 160);
+          return;
+        }
+
+        const count = winners.length;
+        // Dynamic sizing based on how many people won/tied
+        let nameFontSize = 95;
+        let lineSpacing = 160;
+
+        if (count === 1) {
+          nameFontSize = 115;
+          lineSpacing = 190;
+        } else if (count === 2) {
+          nameFontSize = 88;
+          lineSpacing = 165;
+        } else if (count === 3) {
+          nameFontSize = 72;
+          lineSpacing = 135;
+        } else {
+          nameFontSize = Math.max(52, Math.floor(680 / count));
+          lineSpacing = nameFontSize * 1.45;
+        }
+
+        const totalBlockHeight = (count - 1) * lineSpacing;
+        const startY = card.startY + (card.availableHeight - totalBlockHeight) / 2 - 40;
+
+        winners.forEach((win, index) => {
+          const y = startY + index * lineSpacing;
+
+          // Winner Name
+          ctx.font = `bold ${nameFontSize}px "Plus Jakarta Sans", "Cinzel", "Playfair Display", serif`;
+          ctx.fillStyle = '#222222';
+
+          // Truncate or shrink if name exceeds maxWidth
+          let displayName = win.name;
+          const measured = ctx.measureText(displayName);
+          if (measured.width > card.maxWidth) {
+            ctx.font = `bold ${Math.floor(nameFontSize * 0.85)}px "Plus Jakarta Sans", "Cinzel", "Playfair Display", serif`;
+          }
+
+          ctx.fillText(displayName, card.centerX, y);
+
+          // Subtle vote badge / joint winner indicator
+          const subText = win.isJoint
+            ? `★ Joint Winner • ${win.votes} votes ★`
+            : `${win.votes} votes`;
+          ctx.font = '700 42px "Plus Jakarta Sans", sans-serif';
+          ctx.fillStyle = '#B32635'; // Brand Red
+          ctx.fillText(subText, card.centerX, y + (nameFontSize * 0.52));
+        });
+      }
+
+      drawWinnersList(dressingWinners, card1);
+      drawWinnersList(speechWinners, card2);
+
+      try {
+        const dataUrl = canvas.toDataURL('image/png', 0.95);
+        setWinnerPosterSrc(dataUrl);
+      } catch (err) {
+        console.error('Canvas export error for winner poster:', err);
+      } finally {
+        setGeneratingWinnerPoster(false);
+      }
+    };
+
+    winnerImg.onerror = (e) => {
+      console.error('Failed to load /winner-template.png:', e);
+      setGeneratingWinnerPoster(false);
+    };
+  }
+
   function toggleFullscreen() {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -149,8 +294,14 @@ export default function DisplayStage() {
     );
   }
 
-  const isVotingActive = eventData?.status === 'active' && eventData?.end_at && new Date(eventData.end_at).getTime() > Date.now();
-  const isVotingConcluded = eventData?.status === 'closed' || (eventData?.end_at && new Date(eventData.end_at).getTime() <= Date.now());
+  const isVotingActive =
+    eventData?.status === 'active' &&
+    eventData?.end_at &&
+    new Date(eventData.end_at).getTime() > Date.now();
+
+  const isVotingConcluded =
+    eventData?.status === 'closed' ||
+    (eventData?.end_at && new Date(eventData.end_at).getTime() <= Date.now());
 
   return (
     <div className="min-h-screen bg-[#F7F7F5] text-brand-charcoal flex flex-col justify-between p-4 sm:p-6 lg:p-8 select-none">
@@ -201,56 +352,15 @@ export default function DisplayStage() {
               }}
             />
           ) : isVotingConcluded ? (
-            <div className="space-y-4 py-2">
-              <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                <Check className="w-4 h-4" /> Voting Has Concluded
+            <div className="space-y-3 py-1">
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-bold shadow-xs">
+                <Sparkles className="w-4 h-4 text-emerald-600 animate-spin" />
+                Voting Concluded — Official Winners Revealed!
               </div>
 
-              {loadingWinners ? (
-                <div className="text-xs text-brand-secondary py-3 flex items-center justify-center gap-2">
+              {loadingWinners && (
+                <div className="text-xs text-brand-secondary py-1 flex items-center justify-center gap-2">
                   <RefreshCw className="w-4 h-4 animate-spin text-brand-gold" /> Loading official winners...
-                </div>
-              ) : winnersData?.categories ? (
-                <div className="space-y-4 pt-2">
-                  <div className="font-serif-title text-lg sm:text-xl font-bold text-brand-charcoal flex items-center justify-center gap-2">
-                    <Trophy className="w-6 h-6 text-brand-gold" /> Official Award Winners
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto text-left">
-                    {winnersData.categories.map((cat) => (
-                      <div
-                        key={cat.id}
-                        className="p-4 rounded-2xl bg-brand-canvas border border-brand-border shadow-xs space-y-2"
-                      >
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-brand-gold">
-                          {cat.name}
-                        </span>
-                        {cat.winners && cat.winners.length > 0 ? (
-                          cat.winners.map((win) => (
-                            <div key={win.memberId} className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5 font-bold text-xs text-brand-charcoal">
-                                <Crown className="w-4 h-4 text-brand-gold" />
-                                {win.fullName}
-                              </div>
-                              <span className="text-[11px] font-semibold text-brand-red bg-brand-red/10 px-2.5 py-0.5 rounded-md">
-                                {win.voteCount} votes
-                              </span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-xs text-brand-secondary italic">No votes cast</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <button
-                    onClick={() => fetchEventWinners(eventId)}
-                    className="px-5 py-2.5 rounded-xl bg-brand-gold text-white text-xs font-semibold hover:bg-brand-gold/90 transition-all shadow-sm"
-                  >
-                    Reveal Winners
-                  </button>
                 </div>
               )}
             </div>
@@ -261,39 +371,57 @@ export default function DisplayStage() {
           )}
         </div>
 
-        {/* Poster with Embedded QR Code (Clean, no switcher) */}
-        <div className="w-full max-w-4xl flex justify-center">
-          {generatingPoster ? (
-            <div className="py-24 text-brand-secondary text-xs flex flex-col items-center gap-2">
-              <RefreshCw className="w-6 h-6 animate-spin text-brand-gold" />
-              Rendering official voting poster with live QR code...
-            </div>
-          ) : posterSrc ? (
-            <div className="relative group max-w-4xl w-full">
-              <img
-                src={posterSrc}
-                alt="Official BNI Festival Voting Poster"
-                className="w-full h-auto rounded-3xl shadow-xl border border-brand-border/80 object-contain max-h-[68vh] mx-auto"
-              />
-            </div>
-          ) : tokenData?.qrDataUrl ? (
-            <div className="p-8 bg-white rounded-3xl shadow-lg border border-brand-border text-center space-y-3">
-              <img
-                src={tokenData.qrDataUrl}
-                alt="Event Voting QR Code"
-                className="w-80 h-80 mx-auto rounded-2xl"
-              />
-              <p className="text-xs text-brand-secondary">Scan with mobile camera to vote</p>
-            </div>
-          ) : null}
+        {/* Dynamic Poster Display: Switches Automatically from QR Poster to Winner Template Poster */}
+        <div className="w-full max-w-5xl flex justify-center">
+          {isVotingConcluded ? (
+            generatingWinnerPoster ? (
+              <div className="py-28 text-brand-secondary text-xs flex flex-col items-center gap-2">
+                <RefreshCw className="w-8 h-8 animate-spin text-brand-gold" />
+                Composing official winner presentation poster...
+              </div>
+            ) : winnerPosterSrc ? (
+              <div className="relative group max-w-5xl w-full animate-fade-in">
+                <img
+                  src={winnerPosterSrc}
+                  alt="Official Award Winners"
+                  className="w-full h-auto rounded-3xl shadow-2xl border border-brand-border/80 object-contain max-h-[70vh] mx-auto"
+                />
+              </div>
+            ) : null
+          ) : (
+            generatingPoster ? (
+              <div className="py-24 text-brand-secondary text-xs flex flex-col items-center gap-2">
+                <RefreshCw className="w-6 h-6 animate-spin text-brand-gold" />
+                Rendering official voting poster with live QR code...
+              </div>
+            ) : posterSrc ? (
+              <div className="relative group max-w-4xl w-full">
+                <img
+                  src={posterSrc}
+                  alt="Official BNI Festival Voting Poster"
+                  className="w-full h-auto rounded-3xl shadow-xl border border-brand-border/80 object-contain max-h-[68vh] mx-auto"
+                />
+              </div>
+            ) : tokenData?.qrDataUrl ? (
+              <div className="p-8 bg-white rounded-3xl shadow-lg border border-brand-border text-center space-y-3">
+                <img
+                  src={tokenData.qrDataUrl}
+                  alt="Event Voting QR Code"
+                  className="w-80 h-80 mx-auto rounded-2xl"
+                />
+                <p className="text-xs text-brand-secondary">Scan with mobile camera to vote</p>
+              </div>
+            ) : null
+          )}
         </div>
       </main>
 
       {/* Stage Footer */}
       <footer className="text-center pt-4 text-[11px] text-brand-secondary max-w-7xl mx-auto w-full">
-        Scan the QR code with your mobile camera to launch ballot • One vote per verified attendee
+        {isVotingConcluded
+          ? '🎉 Congratulations to all our award winners! Official results verified.'
+          : 'Scan the QR code with your mobile camera to launch ballot • One vote per verified attendee'}
       </footer>
     </div>
   );
 }
-
