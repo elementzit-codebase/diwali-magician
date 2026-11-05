@@ -4,6 +4,7 @@ import DashboardOverview from '../dashboard/DashboardOverview.jsx';
 import MemberManagement from './MemberManagement.jsx';
 import EventManagement from './EventManagement.jsx';
 import QRManagement from './QRManagement.jsx';
+import ResultsDashboard from './ResultsDashboard.jsx';
 import {
   Award,
   Users,
@@ -14,6 +15,7 @@ import {
   Shield,
   Menu,
   X,
+  Trophy,
 } from 'lucide-react';
 
 export default function AdminPortal() {
@@ -33,6 +35,7 @@ export default function AdminPortal() {
     { id: 'members', label: 'Members', icon: Users },
     { id: 'events', label: 'Events & Schedules', icon: Calendar },
     { id: 'qr', label: 'QR Management', icon: QrCode },
+    { id: 'results', label: 'Awards Results', icon: Trophy },
   ];
 
   return (
@@ -121,6 +124,7 @@ export default function AdminPortal() {
           <EventManagement onSelectEventForQR={(id) => handleNavigate('qr', id)} />
         )}
         {currentTab === 'qr' && <QRManagement preselectedEventId={targetEventId} />}
+        {currentTab === 'results' && <ResultsDashboard />}
       </main>
     </div>
   );

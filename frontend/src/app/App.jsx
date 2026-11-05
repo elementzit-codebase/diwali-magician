@@ -4,6 +4,7 @@ import { AdminAuthProvider, useAdminAuth } from '../hooks/useAdminAuth.jsx';
 import AdminAuthPage from '../features/auth/AdminAuthPage.jsx';
 import AdminPortal from '../features/admin/AdminPortal.jsx';
 import MemberVotingFlow from '../features/voting/MemberVotingFlow.jsx';
+import PublicWinnerPresentation from '../features/results/PublicWinnerPresentation.jsx';
 import { Award, QrCode } from 'lucide-react';
 
 function AdminRouteGuard() {
@@ -73,6 +74,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<MemberLandingPlaceholder />} />
           <Route path="/vote" element={<MemberVotingFlow />} />
+          <Route path="/results" element={<PublicWinnerPresentation />} />
           <Route path="/admin/*" element={<AdminRouteGuard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
