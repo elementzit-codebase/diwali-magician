@@ -87,6 +87,8 @@ export default function EventManagement({ onSelectEventForQR }) {
     try {
       await api.post(`/api/events/${eventId}/start`, { durationMinutes: minutes || 5 });
       await loadEvents();
+      // Open clean stage presentation display (TV/Monitor) in a new tab
+      window.open(`/stage?eventId=${eventId}`, '_blank');
       if (onSelectEventForQR) {
         onSelectEventForQR(eventId);
       }

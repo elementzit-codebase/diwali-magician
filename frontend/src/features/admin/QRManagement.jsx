@@ -125,6 +125,9 @@ export default function QRManagement({ preselectedEventId }) {
       setMessage(`Voting started! Duration: ${minutes || 5} minutes`);
       await loadEvents();
       await loadEventQR(eventId);
+
+      // Open clean stage presentation display (TV/Monitor) in a new tab
+      window.open(`/stage?eventId=${eventId}`, '_blank');
     } catch (err) {
       alert(err.message || 'Failed to start voting');
     } finally {
@@ -525,6 +528,14 @@ export default function QRManagement({ preselectedEventId }) {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <a
+              href={`/stage?eventId=${selectedEventId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-gold hover:bg-brand-gold/90 text-white text-xs font-semibold transition-all shadow-sm"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Open TV / Stage Screen
+            </a>
             <a
               href={useTemplate && templatedImageSrc ? templatedImageSrc : tokenData.qrDataUrl}
               download={
