@@ -97,7 +97,7 @@ describe('Phase 9 Full Lifecycle End-to-End Simulation & Security Verification',
       .post('/api/events')
       .set('Cookie', adminCookie)
       .send({
-        title: '50-Member Grand Gala Evening',
+        title: '50-Member Grand Evening',
         description: 'Annual prestigious awards ceremony',
         startAt: new Date(now.getTime() - 60000).toISOString(), // Started 1 min ago
         endAt: new Date(now.getTime() + 1000 * 60 * 60 * 3).toISOString(), // 3 hours window
@@ -136,7 +136,7 @@ describe('Phase 9 Full Lifecycle End-to-End Simulation & Security Verification',
       .set('User-Agent', MOBILE_USER_AGENTS.iPhone);
 
     expect(landingRes.status).toBe(200);
-    expect(landingRes.body.event.title).toBe('50-Member Grand Gala Evening');
+    expect(landingRes.body.event.title).toBe('50-Member Grand Evening');
     expect(landingRes.body.event.votingAvailability).toBe('open');
   });
 

@@ -70,7 +70,7 @@ export default function AdminPortal() {
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <div className="font-serif-title font-bold text-sm text-brand-charcoal">Gala Awards</div>
+              <div className="font-serif-title font-bold text-sm text-brand-charcoal">Awards</div>
               <div className="text-[10px] text-brand-gold font-semibold uppercase tracking-wider">
                 Admin Console
               </div>

@@ -33,7 +33,7 @@ function MemberLandingPlaceholder() {
           <Award className="w-8 h-8 text-brand-red" />
         </div>
         <h1 className="font-serif-title text-2xl font-bold text-brand-charcoal">
-          Gala Awards Evening
+          Awards Evening
         </h1>
         <p className="text-xs text-brand-secondary">
           Premium Event Voting Experience

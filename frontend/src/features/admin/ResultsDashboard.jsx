@@ -58,7 +58,7 @@ export default function ResultsDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="font-serif-title text-2xl font-bold text-brand-charcoal">
-            Official Gala Results & Tally
+            Official Results & Tally
           </h2>
           <p className="text-xs text-brand-secondary mt-0.5">
             Verified candidate totals, joint winner tie determinations, and turnout statistics.

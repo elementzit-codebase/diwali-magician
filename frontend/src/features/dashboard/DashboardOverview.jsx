@@ -130,7 +130,7 @@ export default function DashboardOverview({ onNavigate }) {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-brand-border/60 pb-4">
             <div>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-gold">
-                Active Gala Event
+                Active Event
               </span>
               <h3 className="font-serif-title text-lg font-bold text-brand-charcoal">
                 {activeEvent.title}

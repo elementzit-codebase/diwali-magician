@@ -133,7 +133,7 @@ export default function PublicWinnerPresentation() {
       </main>
 
       <footer className="text-center pb-6 text-[11px] text-brand-secondary">
-        Official Gala Awards Event Results
+        Official Awards Event Results
       </footer>
     </div>
   );

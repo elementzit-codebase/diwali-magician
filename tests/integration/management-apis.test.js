@@ -122,7 +122,7 @@ MEM-004,Diana Sterling`;
         .post('/api/events')
         .set('Cookie', adminCookie)
         .send({
-          title: 'Annual Gala 2026',
+          title: 'Annual 2026',
           description: 'Prestigious voting evening',
           startAt,
           endAt,
@@ -184,7 +184,7 @@ MEM-004,Diana Sterling`;
     it('validates public QR token and returns event details', async () => {
       const res = await request(app).get(`/api/qr/access/${rawAccessToken}`);
       expect(res.status).toBe(200);
-      expect(res.body.event.title).toBe('Annual Gala 2026');
+      expect(res.body.event.title).toBe('Annual 2026');
       expect(res.body.event.votingAvailability).toBe('open');
     });
 

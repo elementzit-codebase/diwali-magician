@@ -36,7 +36,7 @@ export default function VotingSuccess({ eventTitle, submittedAt, voterName }) {
           Awards will be revealed once the voting schedule completes.
         </div>
         <div className="text-[10px] text-brand-gold font-serif-title font-semibold">
-          Enjoy the Gala Evening
+          Enjoy the Evening
         </div>
       </footer>
     </div>

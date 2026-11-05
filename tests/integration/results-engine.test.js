@@ -49,7 +49,7 @@ describe('Phase 8 Results Engine & Joint Winners Tests', () => {
       .post('/api/events')
       .set('Cookie', adminCookie)
       .send({
-        title: 'Annual Gala 2026 Results Test',
+        title: 'Annual 2026 Results Test',
         startAt: new Date(now.getTime() - 120000).toISOString(),
         endAt: new Date(now.getTime() + 7200000).toISOString(), // 2 hrs later (active)
         categories: ['Best Dressing', 'Best Speech'],

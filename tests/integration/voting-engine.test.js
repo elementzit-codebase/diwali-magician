@@ -58,7 +58,7 @@ describe('Phase 5 Voting Engine & Security Transaction Tests', () => {
       .post('/api/events')
       .set('Cookie', adminCookie)
       .send({
-        title: 'Gala Awards Voting Live',
+        title: 'Awards Voting Live',
         startAt: new Date(now.getTime() - 60000).toISOString(),
         endAt: new Date(now.getTime() + 7200000).toISOString(),
         categories: ['Best Dressing', 'Best Speech'],

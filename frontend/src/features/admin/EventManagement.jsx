@@ -157,7 +157,7 @@ export default function EventManagement({ onSelectEventForQR }) {
           </div>
         ) : events.length === 0 ? (
           <div className="col-span-2 text-center py-12 bg-white rounded-2xl border border-brand-border text-brand-secondary text-xs">
-            No events scheduled. Click "Create Event" to schedule your gala awards.
+            No events scheduled. Click "Create Event" to schedule your  awards.
           </div>
         ) : (
           events.map((evt) => (
@@ -267,7 +267,7 @@ export default function EventManagement({ onSelectEventForQR }) {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Annual Gala Awards Evening"
+              placeholder="e.g. Annual Awards Evening"
               className="w-full px-3.5 py-2 rounded-xl border border-brand-border text-xs focus:outline-none focus:border-brand-red"
             />
           </div>

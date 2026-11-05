@@ -101,7 +101,7 @@ describe('Phase 2 Database Schema & Constraint Validation', () => {
       const eventRes = await client.query(`
         INSERT INTO events (title, start_at, end_at, status, access_token_hash, created_by)
         VALUES (
-          'Test Gala', 
+          'Test', 
           CURRENT_TIMESTAMP, 
           CURRENT_TIMESTAMP + INTERVAL '2 hours', 
           'active', 
