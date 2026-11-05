@@ -121,6 +121,62 @@ export async function deactivateMember(id) {
   return updateMember(id, { isActive: false });
 }
 
+export async function importMembersFromList(memberList) {
+  if (!Array.isArray(memberList) || memberList.length === 0) {
+    throw new AppError('Member list is empty', 400, 'EMPTY_LIST');
+  }
+
+  const client = await getClient();
+  const imported = [];
+  const errors = [];
+
+  try {
+    await client.query('BEGIN');
+
+    for (let i = 0; i < memberList.length; i++) {
+      const item = memberList[i];
+      const memberCode = (item.memberCode || item.code || '').trim();
+      const fullName = (item.fullName || item.name || '').trim();
+
+      if (!memberCode || !fullName) {
+        errors.push({ line: i + 1, error: 'Member code and full name cannot be blank' });
+        continue;
+      }
+
+      // Check duplicate
+      const existing = await client.query(
+        `SELECT id FROM members WHERE member_code = $1`,
+        [memberCode]
+      );
+
+      if (existing.rowCount > 0) {
+        errors.push({ line: i + 1, error: `Member code '${memberCode}' already exists` });
+        continue;
+      }
+
+      const insertRes = await client.query(
+        `INSERT INTO members (member_code, full_name, is_active)
+         VALUES ($1, $2, true)
+         RETURNING id, member_code, full_name, is_active`,
+        [memberCode, fullName]
+      );
+      imported.push(insertRes.rows[0]);
+    }
+
+    await client.query('COMMIT');
+    return {
+      importedCount: imported.length,
+      imported,
+      errors,
+    };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export async function importMembersFromCsv(csvContent) {
   const lines = csvContent
     .split(/\r?\n/)

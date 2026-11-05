@@ -46,7 +46,15 @@ export const memberIdParamSchema = z.object({
 
 export const csvImportSchema = z.object({
   body: z.object({
-    csvContent: z.string({ required_error: 'CSV content is required' }).min(1),
+    csvContent: z.string().optional(),
+    members: z
+      .array(
+        z.object({
+          memberCode: z.string().trim().min(1),
+          fullName: z.string().trim().min(1),
+        })
+      )
+      .optional(),
   }),
 });
 

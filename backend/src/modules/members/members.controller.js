@@ -6,6 +6,7 @@ import {
   updateMember,
   deactivateMember,
   importMembersFromCsv,
+  importMembersFromList,
   getNextMemberCode,
   deleteMember,
 } from './members.service.js';
@@ -55,8 +56,16 @@ router.post('/', validate(createMemberSchema), async (req, res, next) => {
 
 router.post('/import-csv', validate(csvImportSchema), async (req, res, next) => {
   try {
-    const { csvContent } = req.body;
-    const result = await importMembersFromCsv(csvContent);
+    const { csvContent, members } = req.body;
+    let result;
+    if (members && Array.isArray(members)) {
+      result = await importMembersFromList(members);
+    } else if (csvContent) {
+      result = await importMembersFromCsv(csvContent);
+    } else {
+      throw new AppError('Either members array or csvContent is required', 400, 'PAYLOAD_REQUIRED');
+    }
+
     res.status(200).json({
       message: `Imported ${result.importedCount} members successfully`,
       ...result,

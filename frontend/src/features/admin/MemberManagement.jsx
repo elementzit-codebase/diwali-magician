@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import { api } from '../../services/api.js';
 import Modal from '../../components/Modal.jsx';
 import { usePopup } from '../../components/PopupModal.jsx';
@@ -12,6 +13,7 @@ import {
   Edit2,
   AlertCircle,
   Trash2,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 export default function MemberManagement() {
@@ -33,6 +35,8 @@ export default function MemberManagement() {
   const [csvContent, setCsvContent] = useState('');
   const [actionError, setActionError] = useState('');
   const [importResult, setImportResult] = useState(null);
+  const [uploadingExcel, setUploadingExcel] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadMembers();
@@ -100,6 +104,60 @@ export default function MemberManagement() {
     }
   }
 
+  async function handleFileUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setActionError('');
+    setImportResult(null);
+    setUploadingExcel(true);
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      if (!rows || rows.length === 0) {
+        throw new Error('Excel sheet is completely empty');
+      }
+
+      // Check header or parse rows
+      let startIndex = 0;
+      const firstRowStr = (rows[0] || []).join(' ').toLowerCase();
+      if (firstRowStr.includes('code') || firstRowStr.includes('name')) {
+        startIndex = 1;
+      }
+
+      const parsedMembers = [];
+      for (let i = startIndex; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0) continue;
+
+        const codeVal = row[0] !== undefined && row[0] !== null ? String(row[0]).trim() : '';
+        const nameVal = row[1] !== undefined && row[1] !== null ? String(row[1]).trim() : '';
+
+        if (codeVal && nameVal) {
+          parsedMembers.push({ memberCode: codeVal, fullName: nameVal });
+        }
+      }
+
+      if (parsedMembers.length === 0) {
+        throw new Error('No valid member records found. Please ensure Column A is Member Code and Column B is Name.');
+      }
+
+      const res = await api.post('/api/members/import-csv', { members: parsedMembers });
+      setImportResult(res);
+      loadMembers();
+    } catch (err) {
+      setActionError(err.message || 'Failed to process Excel file');
+    } finally {
+      setUploadingExcel(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
   async function handleImportCsv(e) {
     e.preventDefault();
     setActionError('');
@@ -161,7 +219,7 @@ export default function MemberManagement() {
             }}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-brand-border hover:bg-white text-brand-charcoal text-xs font-medium transition-all"
           >
-            <Upload className="w-4 h-4 text-brand-secondary" /> Import CSV
+            <Upload className="w-4 h-4 text-brand-secondary" /> Import Excel / CSV
           </button>
         </div>
       </div>
@@ -336,13 +394,13 @@ export default function MemberManagement() {
         </form>
       </Modal>
 
-      {/* CSV Import Modal */}
+      {/* CSV / Excel Import Modal */}
       <Modal
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
-        title="Import Members from CSV"
+        title="Import Members from Excel or CSV"
       >
-        <form onSubmit={handleImportCsv} className="space-y-4">
+        <div className="space-y-5">
           {actionError && (
             <div className="p-3 rounded-xl bg-red-50 text-red-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -359,29 +417,63 @@ export default function MemberManagement() {
               )}
             </div>
           )}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-brand-secondary mb-1">
-              Paste CSV Data (memberCode, fullName)
-            </label>
-            <textarea
-              rows="8"
-              required
-              value={csvContent}
-              onChange={(e) => setCsvContent(e.target.value)}
-              placeholder={`MEM-001,Alexander Wright\nMEM-002,Beatrice Montgomery\nMEM-003,Charles Pemberton`}
-              className="w-full p-3 rounded-xl border border-brand-border text-xs font-mono focus:outline-none focus:border-brand-red"
-            />
+
+          {/* Option 1: Direct Excel/CSV File Upload */}
+          <div className="p-4 rounded-2xl bg-brand-canvas/70 border border-brand-border space-y-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-brand-charcoal">
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              Upload Excel (.xlsx, .xls) or CSV File
+            </div>
+            <p className="text-[11px] text-brand-secondary">
+              Directly select your Excel sheet. Column A must be <strong>Member Code</strong> and Column B must be <strong>Full Name</strong>.
+            </p>
+            <div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".xlsx, .xls, .csv"
+                onChange={handleFileUpload}
+                disabled={uploadingExcel}
+                className="hidden"
+                id="excelFileInput"
+              />
+              <label
+                htmlFor="excelFileInput"
+                className={`w-full py-3 px-4 rounded-xl bg-white border border-dashed border-brand-border hover:border-brand-red flex items-center justify-center gap-2 text-xs font-semibold text-brand-charcoal cursor-pointer shadow-xs transition-all ${
+                  uploadingExcel ? 'opacity-60 cursor-not-allowed' : ''
+                }`}
+              >
+                <Upload className="w-4 h-4 text-brand-red" />
+                {uploadingExcel ? 'Reading & Uploading Excel...' : 'Choose Excel / CSV File'}
+              </label>
+            </div>
           </div>
-          <p className="text-[11px] text-brand-secondary">
-            Header row is optional. Each line must be in comma-separated format.
-          </p>
-          <button
-            type="submit"
-            className="w-full py-2.5 rounded-xl bg-brand-red hover:bg-brand-darkRed text-white text-xs font-medium transition-all shadow-sm"
-          >
-            Execute CSV Import
-          </button>
-        </form>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 border-t border-brand-border/60"></div>
+            <span className="text-[10px] uppercase font-bold text-brand-secondary">Or Paste CSV Text</span>
+            <div className="flex-1 border-t border-brand-border/60"></div>
+          </div>
+
+          <form onSubmit={handleImportCsv} className="space-y-4">
+            <div>
+              <textarea
+                rows="5"
+                value={csvContent}
+                onChange={(e) => setCsvContent(e.target.value)}
+                placeholder={`MEM-001,Alexander Wright\nMEM-002,Beatrice Montgomery`}
+                className="w-full p-3 rounded-xl border border-brand-border text-xs font-mono focus:outline-none focus:border-brand-red"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!csvContent.trim()}
+              className="w-full py-2.5 rounded-xl bg-brand-charcoal hover:bg-black text-white text-xs font-medium transition-all shadow-sm disabled:opacity-50"
+            >
+              Execute Pasted CSV Import
+            </button>
+          </form>
+        </div>
       </Modal>
     </div>
   );
