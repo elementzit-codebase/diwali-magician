@@ -6,7 +6,7 @@ INSERT INTO admins (full_name, email, password_hash)
 VALUES (
     'Super Administrator',
     'admin@voting.com',
-    '$2b$12$4LqT21F7eLpE5uE6zR3N.eS9j6.D7.b2HjT9jW8mGz7KqP1l3yUeq'
+    '$2b$12$fAx7EZUEjV99Vc3KjIIFT.xDtHiq2SP.VWwBHqVuS9AHe40KR.GYe'
 )
-ON CONFLICT (email) DO NOTHING;
+ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
