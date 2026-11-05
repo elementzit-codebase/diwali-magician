@@ -194,3 +194,15 @@ export async function importMembersFromCsv(csvContent) {
   }
 }
 
+export async function deleteMember(id) {
+  const res = await query(
+    `DELETE FROM members WHERE id = $1 RETURNING id, member_code, full_name`,
+    [id]
+  );
+  if (res.rowCount === 0) {
+    throw new AppError('Member not found', 404, 'MEMBER_NOT_FOUND');
+  }
+  return res.rows[0];
+}
+
+

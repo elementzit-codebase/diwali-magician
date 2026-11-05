@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api.js';
 import Modal from '../../components/Modal.jsx';
+import { usePopup } from '../../components/PopupModal.jsx';
 import {
   Users,
   UserPlus,
@@ -10,9 +11,11 @@ import {
   XCircle,
   Edit2,
   AlertCircle,
+  Trash2,
 } from 'lucide-react';
 
 export default function MemberManagement() {
+  const { showConfirm, showError } = usePopup();
   const [members, setMembers] = useState([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
@@ -64,6 +67,36 @@ export default function MemberManagement() {
       loadMembers();
     } catch (err) {
       setActionError(err.message || 'Operation failed');
+    }
+  }
+
+  async function handleDeleteMember(m) {
+    let confirmed = false;
+    if (showConfirm) {
+      confirmed = await showConfirm(
+        `Are you sure you want to permanently delete member "${m.full_name}" (${m.member_code})? Any historical nomination and ballot links will be permanently removed.`,
+        {
+          title: 'Delete Member',
+          confirmText: 'Delete Permanently',
+          cancelText: 'Keep Member',
+        }
+      );
+    } else {
+      confirmed = window.confirm(`Permanently delete member "${m.full_name}" (${m.member_code})?`);
+    }
+
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/api/members/${m.id}`);
+      if (isAddOpen && editMember?.id === m.id) {
+        setIsAddOpen(false);
+        setEditMember(null);
+      }
+      loadMembers();
+    } catch (err) {
+      if (showError) showError(err.message || 'Failed to delete member');
+      else alert(err.message || 'Failed to delete member');
     }
   }
 
@@ -189,12 +222,22 @@ export default function MemberManagement() {
                       )}
                     </td>
                     <td className="py-3.5 px-6 text-right">
-                      <button
-                        onClick={() => openEdit(m)}
-                        className="p-1 rounded-lg hover:bg-brand-canvas text-brand-secondary hover:text-brand-charcoal transition-colors"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => openEdit(m)}
+                          title="Edit Member"
+                          className="p-1.5 rounded-lg hover:bg-brand-canvas text-brand-secondary hover:text-brand-charcoal transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMember(m)}
+                          title="Delete Member"
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-brand-secondary hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -273,12 +316,23 @@ export default function MemberManagement() {
               Member is active and eligible to participate
             </label>
           </div>
-          <button
-            type="submit"
-            className="w-full mt-4 py-2.5 rounded-xl bg-brand-red hover:bg-brand-darkRed text-white text-xs font-medium transition-all shadow-sm"
-          >
-            {editMember ? 'Save Changes' : 'Create Member'}
-          </button>
+          <div className="flex items-center gap-2 mt-4 pt-2">
+            <button
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-brand-red hover:bg-brand-darkRed text-white text-xs font-medium transition-all shadow-sm"
+            >
+              {editMember ? 'Save Changes' : 'Create Member'}
+            </button>
+            {editMember && (
+              <button
+                type="button"
+                onClick={() => handleDeleteMember(editMember)}
+                className="py-2.5 px-3 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold transition-all flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete
+              </button>
+            )}
+          </div>
         </form>
       </Modal>
 

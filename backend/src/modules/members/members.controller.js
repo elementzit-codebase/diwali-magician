@@ -7,6 +7,7 @@ import {
   deactivateMember,
   importMembersFromCsv,
   getNextMemberCode,
+  deleteMember,
 } from './members.service.js';
 import { requireAdminAuth } from '../../middleware/adminAuth.js';
 import { validate } from '../../middleware/validate.js';
@@ -90,6 +91,15 @@ router.patch('/:id/deactivate', validate(memberIdParamSchema), async (req, res, 
   try {
     const member = await deactivateMember(req.params.id);
     res.json({ message: 'Member deactivated successfully', member });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/:id', validate(memberIdParamSchema), async (req, res, next) => {
+  try {
+    const member = await deleteMember(req.params.id);
+    res.json({ message: 'Member deleted successfully', member });
   } catch (err) {
     next(err);
   }
