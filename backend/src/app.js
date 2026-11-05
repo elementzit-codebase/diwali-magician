@@ -9,6 +9,7 @@ import memberRoutes from './modules/members/members.controller.js';
 import eventRoutes from './modules/events/events.controller.js';
 import publicEventRoutes from './modules/events/public-events.controller.js';
 import qrRoutes from './modules/qr/qr.controller.js';
+import votingRoutes from './modules/voting/voting.controller.js';
 
 export function createApp() {
   const app = express();
@@ -48,6 +49,7 @@ export function createApp() {
   app.use('/api/events', eventRoutes);
   app.use('/api/public/events', publicEventRoutes);
   app.use('/api/qr', qrRoutes);
+  app.use('/api/voting', votingRoutes);
 
   // Centralized Error Handler (must be registered after all routes)
   app.use(errorHandler);
