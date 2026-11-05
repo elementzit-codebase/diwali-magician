@@ -10,6 +10,7 @@ import {
   AlertCircle,
   StopCircle,
   CheckCircle,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function EventManagement({ onSelectEventForQR }) {
@@ -235,6 +236,16 @@ export default function EventManagement({ onSelectEventForQR }) {
                 >
                   Manage QR
                 </button>
+                {evt.raw_access_token && (
+                  <a
+                    href={`/vote?token=${evt.raw_access_token}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-brand-red/10 hover:bg-brand-red/20 text-xs font-semibold text-brand-red transition-colors flex items-center gap-1 border border-brand-red/20"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> View Voting Page
+                  </a>
+                )}
                 {evt.status === 'active' && (
                   <button
                     onClick={() => handleCloseEarly(evt.id)}

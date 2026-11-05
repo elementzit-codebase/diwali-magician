@@ -11,6 +11,7 @@ export async function listEvents() {
       e.start_at, 
       e.end_at, 
       e.status,
+      e.raw_access_token,
       e.created_at,
       e.updated_at,
       COUNT(DISTINCT em.member_id)::int AS total_members,
@@ -71,10 +72,10 @@ export async function createEvent({ title, description, startAt, endAt, categori
     }
 
     const eventRes = await client.query(
-      `INSERT INTO events (title, description, start_at, end_at, status, access_token_hash, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, title, description, start_at, end_at, status, created_at`,
-      [title, description || null, startAt, endAt, initialStatus, tokenHash, adminId]
+      `INSERT INTO events (title, description, start_at, end_at, status, access_token_hash, raw_access_token, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, title, description, start_at, end_at, status, raw_access_token, created_at`,
+      [title, description || null, startAt, endAt, initialStatus, tokenHash, rawToken, adminId]
     );
     const event = eventRes.rows[0];
 

@@ -48,10 +48,10 @@ export async function regenerateEventToken(eventId) {
 
   const res = await query(
     `UPDATE events
-     SET access_token_hash = $1, updated_at = CURRENT_TIMESTAMP
-     WHERE id = $2
+     SET access_token_hash = $1, raw_access_token = $2, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $3
      RETURNING id, title`,
-    [tokenHash, eventId]
+    [tokenHash, rawToken, eventId]
   );
 
   if (res.rowCount === 0) {

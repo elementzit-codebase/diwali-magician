@@ -217,7 +217,10 @@ export default function MemberVotingFlow() {
   if (step === 'success') {
     return (
       <VotingSuccess
-        eventTitle={eventData.title}
+        eventId={eventData?.id}
+        eventTitle={eventData?.title}
+        endAt={eventData?.endAt}
+        token={token}
         submittedAt={submissionInfo?.submittedAt}
         voterName={voterSession?.memberName}
       />
