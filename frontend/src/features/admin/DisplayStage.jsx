@@ -180,18 +180,21 @@ export default function DisplayStage() {
       const speechWinners = extractWinners(speechCat);
 
       // Card 1 (Left: Diwali Style Icon) geometry
+      // In 5961 x 3357 template:
+      // White box spans x: 1070 to 3230 (width ~ 2160, center X = 2150)
+      // Empty area below the red header badge: y = 1800 to 2820 (height ~ 1020, center Y = 2310)
       const card1 = {
-        centerX: 2155,
-        startY: 1880,
-        availableHeight: 880,
+        centerX: 2150,
+        centerY: 2310,
         maxWidth: 1850,
       };
 
       // Card 2 (Right: Sparkling Speaker) geometry
+      // White box spans x: 3330 to 5540 (width ~ 2210, center X = 4435)
+      // Empty area below the red header badge: y = 1800 to 2820 (height ~ 1020, center Y = 2310)
       const card2 = {
         centerX: 4435,
-        startY: 1880,
-        availableHeight: 880,
+        centerY: 2310,
         maxWidth: 1850,
       };
 
@@ -202,56 +205,55 @@ export default function DisplayStage() {
         if (winners.length === 0) {
           ctx.font = 'italic 500 65px "Plus Jakarta Sans", sans-serif';
           ctx.fillStyle = '#8C8C8C';
-          ctx.fillText('No Votes Recorded', card.centerX, card.startY + 160);
+          ctx.fillText('No Votes Recorded', card.centerX, card.centerY);
           return;
         }
 
-        const count = winners.length;
-        // Dynamic sizing based on how many people won/tied
-        let nameFontSize = 95;
-        let lineSpacing = 160;
+        // Combine all names with comma if tie: e.g. "Alwyn, Bhavya"
+        const combinedNames = winners.map(w => w.name).join(', ');
+        const votes = winners[0]?.votes ?? 0;
+        const isTie = winners.length > 1;
 
-        if (count === 1) {
-          nameFontSize = 115;
-          lineSpacing = 190;
-        } else if (count === 2) {
+        // Dynamically scale font size according to name string length
+        let nameFontSize = 110;
+        if (combinedNames.length > 35) {
+          nameFontSize = 60;
+        } else if (combinedNames.length > 25) {
+          nameFontSize = 74;
+        } else if (combinedNames.length > 18) {
           nameFontSize = 88;
-          lineSpacing = 165;
-        } else if (count === 3) {
-          nameFontSize = 72;
-          lineSpacing = 135;
-        } else {
-          nameFontSize = Math.max(52, Math.floor(680 / count));
-          lineSpacing = nameFontSize * 1.45;
+        } else if (combinedNames.length > 12) {
+          nameFontSize = 100;
         }
 
-        const totalBlockHeight = (count - 1) * lineSpacing;
-        const startY = card.startY + (card.availableHeight - totalBlockHeight) / 2 - 40;
-
-        winners.forEach((win, index) => {
-          const y = startY + index * lineSpacing;
-
-          // Winner Name
+        ctx.font = `bold ${nameFontSize}px "Plus Jakarta Sans", "Cinzel", "Playfair Display", serif`;
+        // Check text width against max box width
+        let measuredWidth = ctx.measureText(combinedNames).width;
+        if (measuredWidth > card.maxWidth) {
+          const ratio = (card.maxWidth - 60) / measuredWidth;
+          nameFontSize = Math.max(48, Math.floor(nameFontSize * ratio));
           ctx.font = `bold ${nameFontSize}px "Plus Jakarta Sans", "Cinzel", "Playfair Display", serif`;
-          ctx.fillStyle = '#222222';
+        }
 
-          // Truncate or shrink if name exceeds maxWidth
-          let displayName = win.name;
-          const measured = ctx.measureText(displayName);
-          if (measured.width > card.maxWidth) {
-            ctx.font = `bold ${Math.floor(nameFontSize * 0.85)}px "Plus Jakarta Sans", "Cinzel", "Playfair Display", serif`;
-          }
+        // Vertical spacing: Name at centerY - offset, Vote Count clearly below it
+        const gap = Math.max(45, Math.floor(nameFontSize * 0.75));
+        const nameY = card.centerY - gap / 2;
+        const countY = card.centerY + gap / 2 + 25;
 
-          ctx.fillText(displayName, card.centerX, y);
+        // Draw Winner Name(s)
+        ctx.fillStyle = '#1A1A1A';
+        ctx.fillText(combinedNames, card.centerX, nameY);
 
-          // Subtle vote badge / joint winner indicator
-          const subText = win.isJoint
-            ? `★ Joint Winner • ${win.votes} votes ★`
-            : `${win.votes} votes`;
-          ctx.font = '700 42px "Plus Jakarta Sans", sans-serif';
-          ctx.fillStyle = '#B32635'; // Brand Red
-          ctx.fillText(subText, card.centerX, y + (nameFontSize * 0.52));
-        });
+        // Draw Vote Count / Tie indicator with proper spacing & size
+        const voteLabel = votes === 1 ? '1 vote' : `${votes} votes`;
+        const countText = isTie
+          ? `★ Joint Winner (${voteLabel}) ★`
+          : `(${voteLabel})`;
+
+        const countFontSize = Math.min(50, Math.max(38, Math.floor(nameFontSize * 0.45)));
+        ctx.font = `bold ${countFontSize}px "Plus Jakarta Sans", sans-serif`;
+        ctx.fillStyle = '#B32635'; // Luxury Red Accent
+        ctx.fillText(countText, card.centerX, countY);
       }
 
       drawWinnersList(dressingWinners, card1);

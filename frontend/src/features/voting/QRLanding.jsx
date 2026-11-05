@@ -83,15 +83,17 @@ export default function QRLanding({ event, onStartVoting, onRefresh }) {
               <h3 className="font-serif-title text-xl font-bold text-brand-charcoal">
                 Voting Opens Soon
               </h3>
-              <p className="text-xs text-brand-secondary mt-1">
-                Scheduled for{' '}
-                <strong className="text-brand-charcoal">
-                  {new Date(event.startAt).toLocaleString([], {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  })}
-                </strong>
-              </p>
+              {isFutureScheduled && (
+                <p className="text-xs text-brand-secondary mt-1">
+                  Scheduled for{' '}
+                  <strong className="text-brand-charcoal">
+                    {new Date(event.startAt).toLocaleString([], {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
+                  </strong>
+                </p>
+              )}
             </div>
 
             {/* Luxurious Countdown Display or Waiting Notice */}
