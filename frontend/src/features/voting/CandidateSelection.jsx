@@ -44,10 +44,10 @@ export default function CandidateSelection({
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between p-5 max-w-md mx-auto">
-      <div>
+    <div className="min-h-dvh flex flex-col max-w-md mx-auto px-4 pt-2 pb-0">
+      <div className="flex-1 pb-4">
         {/* Header Metadata */}
-        <div className="flex items-center justify-between pt-4 mb-4">
+        <div className="flex items-center justify-between pt-2 mb-3">
           <button
             onClick={onCancelSession}
             className="text-xs text-brand-secondary hover:text-brand-charcoal transition-colors py-1 px-2"
@@ -61,7 +61,7 @@ export default function CandidateSelection({
         </div>
 
         {/* Category Step Indicator */}
-        <div className="flex items-center gap-1.5 mb-6">
+        <div className="flex items-center gap-1.5 mb-4">
           {categories.map((cat, idx) => {
             const isCompleted = Boolean(selections[cat.id]);
             const isCurrent = idx === activeCategoryIndex;
@@ -86,12 +86,12 @@ export default function CandidateSelection({
         </div>
 
         {/* Category Heading */}
-        <div className="mb-4">
-          <div className="flex items-center gap-1.5 text-brand-gold text-[10px] font-bold uppercase tracking-wider mb-1">
+        <div className="mb-3">
+          <div className="flex items-center gap-1.5 text-brand-gold text-[10px] font-bold uppercase tracking-wider mb-0.5">
             <Award className="w-3.5 h-3.5" /> Category {activeCategoryIndex + 1} of{' '}
             {categories.length}
           </div>
-          <h2 className="font-serif-title text-2xl font-bold text-brand-charcoal">
+          <h2 className="font-serif-title text-xl sm:text-2xl font-bold text-brand-charcoal">
             {currentCategory?.name}
           </h2>
           <p className="text-xs text-brand-secondary mt-0.5">
@@ -100,14 +100,14 @@ export default function CandidateSelection({
         </div>
 
         {error && (
-          <div className="p-3 mb-4 rounded-xl bg-red-50 text-red-700 text-xs flex items-center gap-2">
+          <div className="p-3 mb-3 rounded-xl bg-red-50 text-red-700 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Candidate Cards Grid */}
-        <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+        <div className="space-y-2.5">
           {currentCategory?.candidates.length === 0 ? (
             <div className="text-center py-8 bg-white rounded-2xl border border-brand-border text-brand-secondary text-xs">
               No eligible candidates found for this category.
@@ -119,7 +119,7 @@ export default function CandidateSelection({
                 <button
                   key={cand.id}
                   onClick={() => handleSelectCandidate(currentCategory.id, cand.id)}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 active:scale-[0.99] ${
+                  className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 active:scale-[0.99] ${
                     isSelected
                       ? 'bg-white border-brand-gold ring-2 ring-brand-gold/30 shadow-md'
                       : 'bg-white border-brand-border hover:border-brand-border/80 shadow-sm'
@@ -161,11 +161,11 @@ export default function CandidateSelection({
         </div>
       </div>
 
-      {/* Bottom Sticky Action Bar */}
-      <div className="pt-4 border-t border-brand-border/60">
+      {/* Docked Action Bar - Always visible without forcing empty scroll space */}
+      <div className="sticky bottom-0 z-20 bg-brand-canvas/95 backdrop-blur-md pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-brand-border/60 mt-auto">
         <button
           onClick={handleNextCategory}
-          className="w-full py-4 px-6 rounded-2xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.98] text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all"
+          className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.98] text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all"
         >
           {isLastCategory ? 'Review Ballot' : 'Next Category'}{' '}
           <ArrowRight className="w-4 h-4" />

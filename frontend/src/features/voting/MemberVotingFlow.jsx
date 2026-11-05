@@ -117,7 +117,7 @@ export default function MemberVotingFlow() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-canvas text-xs text-brand-secondary">
+      <div className="min-h-dvh flex items-center justify-center bg-brand-canvas text-xs text-brand-secondary">
         Validating event access...
       </div>
     );
@@ -125,8 +125,8 @@ export default function MemberVotingFlow() {
 
   if (step === 'error') {
     return (
-      <div className="min-h-screen flex flex-col justify-between p-6 max-w-md mx-auto text-center">
-        <div className="pt-16 space-y-4">
+      <div className="min-h-dvh flex flex-col justify-between p-5 max-w-md mx-auto text-center">
+        <div className="pt-12 space-y-4">
           <div className="w-16 h-16 rounded-3xl bg-red-50 border border-red-200 text-brand-red mx-auto flex items-center justify-center">
             <AlertCircle className="w-8 h-8" />
           </div>
@@ -137,7 +137,7 @@ export default function MemberVotingFlow() {
             {errorMessage}
           </p>
         </div>
-        <footer className="pb-8 text-[11px] text-brand-secondary">
+        <footer className="pb-[max(1.5rem,env(safe-area-inset-bottom))] text-[11px] text-brand-secondary">
           Please rescan the official event QR code at your venue
         </footer>
       </div>
@@ -146,8 +146,8 @@ export default function MemberVotingFlow() {
 
   if (step === 'already-voted') {
     return (
-      <div className="min-h-screen flex flex-col justify-between p-6 max-w-md mx-auto text-center">
-        <div className="pt-16 space-y-4">
+      <div className="min-h-dvh flex flex-col justify-between p-5 max-w-md mx-auto text-center">
+        <div className="pt-12 space-y-4">
           <div className="w-16 h-16 rounded-3xl bg-amber-50 border border-amber-200 text-amber-700 mx-auto flex items-center justify-center">
             <AlertCircle className="w-8 h-8" />
           </div>
@@ -158,7 +158,7 @@ export default function MemberVotingFlow() {
             A ballot has already been submitted for this registered member in {eventData?.title}. Each attendee may only vote once per event.
           </p>
         </div>
-        <div className="pb-8">
+        <div className="pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           <button
             onClick={() => setStep('landing')}
             className="py-3 px-6 rounded-2xl bg-brand-canvas border border-brand-border text-xs font-medium text-brand-charcoal hover:bg-brand-border/40"

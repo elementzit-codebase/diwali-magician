@@ -51,23 +51,23 @@ export default function VotingSuccess({
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between p-5 sm:p-6 max-w-md mx-auto text-center">
-      <header className="pt-8 space-y-3">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 shadow-sm mx-auto">
-          <CheckCircle2 className="w-8 h-8" />
+    <div className="min-h-dvh flex flex-col justify-between p-4 sm:p-6 max-w-md mx-auto text-center">
+      <header className="pt-4 sm:pt-6 space-y-2 sm:space-y-3">
+        <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 shadow-sm mx-auto">
+          <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
         </div>
         <div className="text-[10px] font-semibold uppercase tracking-widest text-brand-gold">
           Ballot Recorded
         </div>
-        <h1 className="font-serif-title text-2xl sm:text-3xl font-bold text-brand-charcoal">
+        <h1 className="font-serif-title text-xl sm:text-3xl font-bold text-brand-charcoal">
           Thank You, {voterName}!
         </h1>
-        <p className="text-xs text-brand-secondary leading-relaxed px-4">
+        <p className="text-xs text-brand-secondary leading-relaxed px-2 sm:px-4">
           Your confidential ballot for <strong>{eventTitle}</strong> event has been securely logged.
         </p>
       </header>
 
-      <main className="my-6 space-y-4">
+      <main className="my-4 sm:my-6 space-y-4">
         {/* Verification Card */}
         <div className="bg-white rounded-3xl p-5 border border-brand-border shadow-sm space-y-3">
           <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700">
@@ -190,8 +190,7 @@ export default function VotingSuccess({
         )}
       </main>
 
-      <footer className="pb-6 space-y-1 text-center">
-       
+      <footer className="pb-[max(1rem,env(safe-area-inset-bottom))] space-y-1 text-center">
         <div className="text-[10px] text-brand-secondary">
           Secured with confidential ballot architecture
         </div>

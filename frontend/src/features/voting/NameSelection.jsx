@@ -44,10 +44,10 @@ export default function NameSelection({ eventId, token, onSelectName, onBack }) 
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between p-5 max-w-md mx-auto">
+    <div className="min-h-dvh flex flex-col justify-between p-4 sm:p-5 max-w-md mx-auto">
       <div>
         {/* Navigation Bar */}
-        <div className="flex items-center justify-between pt-4 mb-4">
+        <div className="flex items-center justify-between pt-2 mb-3">
           <button
             onClick={onBack}
             className="flex items-center gap-1 text-xs text-brand-secondary hover:text-brand-charcoal transition-colors py-1 px-2 rounded-lg"
@@ -60,8 +60,8 @@ export default function NameSelection({ eventId, token, onSelectName, onBack }) 
         </div>
 
         {/* Heading */}
-        <header className="space-y-1 mb-6">
-          <h2 className="font-serif-title text-2xl font-bold text-brand-charcoal">
+        <header className="space-y-1 mb-4">
+          <h2 className="font-serif-title text-xl sm:text-2xl font-bold text-brand-charcoal">
             Select Your Name
           </h2>
           <p className="text-xs text-brand-secondary leading-relaxed">
@@ -70,7 +70,7 @@ export default function NameSelection({ eventId, token, onSelectName, onBack }) 
         </header>
 
         {/* Sticky Mobile Search Input */}
-        <div className="relative mb-4 sticky top-2 z-10">
+        <div className="relative mb-3 sticky top-2 z-10">
           <Search className="w-4 h-4 text-brand-secondary absolute left-3.5 top-3.5" />
           <input
             type="text"
@@ -91,14 +91,14 @@ export default function NameSelection({ eventId, token, onSelectName, onBack }) 
         </div>
 
         {error && (
-          <div className="p-3 mb-4 rounded-xl bg-red-50 text-red-700 text-xs flex items-center gap-2">
+          <div className="p-3 mb-3 rounded-xl bg-red-50 text-red-700 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Guest List */}
-        <div className="space-y-2 max-h-[58vh] overflow-y-auto pr-1">
+        <div className="space-y-2 pb-4">
           {loading ? (
             <div className="text-center py-10 text-brand-secondary text-xs">
               Loading guest directory...
@@ -158,7 +158,7 @@ export default function NameSelection({ eventId, token, onSelectName, onBack }) 
       {/* Confirmation Bottom-Sheet / Dialog (Step 3) */}
       {confirmingMember && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-brand-charcoal/50 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl border border-brand-border p-6 shadow-2xl space-y-5">
+          <div className="w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl border border-brand-border p-5 sm:p-6 shadow-2xl space-y-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
             <div className="text-center space-y-2">
               <div className="w-12 h-12 rounded-full bg-brand-canvas text-brand-gold mx-auto flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6" />
@@ -200,7 +200,7 @@ export default function NameSelection({ eventId, token, onSelectName, onBack }) 
       )}
 
       {/* Footer */}
-      <footer className="text-center pt-4 pb-2 text-[11px] text-brand-secondary">
+      <footer className="text-center pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-[11px] text-brand-secondary">
         Select your registered name to proceed
       </footer>
     </div>

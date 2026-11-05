@@ -7,27 +7,27 @@ export default function QRLanding({ event, onStartVoting, onRefresh }) {
   const isFutureScheduled = Boolean(event.startAt && new Date(event.startAt).getTime() > Date.now());
 
   return (
-    <div className="min-h-screen flex flex-col justify-between p-5 max-w-md mx-auto">
+    <div className="min-h-dvh flex flex-col justify-between p-4 sm:p-5 max-w-md mx-auto">
       {/* Header */}
-      <header className="pt-8 text-center space-y-3">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-sm border border-brand-border">
-          <Award className="w-8 h-8 text-brand-red" />
+      <header className="pt-4 sm:pt-6 text-center space-y-2 sm:space-y-3">
+        <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white shadow-sm border border-brand-border">
+          <Award className="w-7 h-7 sm:w-8 sm:h-8 text-brand-red" />
         </div>
         <div className="text-[10px] font-semibold uppercase tracking-widest text-brand-gold">
           Official Balloting
         </div>
-        <h1 className="font-serif-title text-2xl sm:text-3xl font-bold text-brand-charcoal">
+        <h1 className="font-serif-title text-xl sm:text-3xl font-bold text-brand-charcoal">
           {event.title}
         </h1>
         {event.description && (
-          <p className="text-xs text-brand-secondary leading-relaxed px-4">
+          <p className="text-xs text-brand-secondary leading-relaxed px-2 sm:px-4">
             {event.description}
           </p>
         )}
       </header>
 
       {/* Main Card */}
-      <main className="bg-white rounded-3xl p-6 sm:p-7 border border-brand-border shadow-sm my-6 space-y-6 text-center">
+      <main className="bg-white rounded-3xl p-5 sm:p-7 border border-brand-border shadow-sm my-3 sm:my-5 space-y-4 sm:space-y-5 text-center">
         {isAvailable ? (
           <>
             <CountdownTimer
@@ -163,7 +163,7 @@ export default function QRLanding({ event, onStartVoting, onRefresh }) {
       </main>
 
       {/* Footer */}
-      <footer className="text-center pb-4 text-[11px] text-brand-secondary">
+      <footer className="text-center pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-1 text-[11px] text-brand-secondary">
         Secured with confidential ballot architecture
       </footer>
     </div>

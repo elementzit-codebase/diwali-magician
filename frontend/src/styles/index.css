@@ -10,6 +10,12 @@
 body {
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
+  min-height: 100dvh;
+  background-color: #F7F7F5;
+}
+
+html {
+  min-height: 100dvh;
 }
 
 .font-serif-title {

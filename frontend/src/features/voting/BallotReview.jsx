@@ -11,10 +11,10 @@ export default function BallotReview({
   onSubmitBallot,
 }) {
   return (
-    <div className="min-h-screen flex flex-col justify-between p-5 max-w-md mx-auto">
-      <div>
+    <div className="min-h-dvh flex flex-col justify-between max-w-md mx-auto p-4 sm:p-5">
+      <div className="space-y-4">
         {/* Navigation */}
-        <div className="flex items-center justify-between pt-4 mb-4">
+        <div className="flex items-center justify-between pt-2 mb-2">
           <button
             onClick={onEditSelection}
             disabled={submitting}
@@ -28,8 +28,8 @@ export default function BallotReview({
         </div>
 
         {/* Heading */}
-        <header className="space-y-1 mb-6">
-          <h2 className="font-serif-title text-2xl font-bold text-brand-charcoal">
+        <header className="space-y-1 mb-3">
+          <h2 className="font-serif-title text-xl sm:text-2xl font-bold text-brand-charcoal">
             Review Your Ballot
           </h2>
           <p className="text-xs text-brand-secondary">
@@ -38,7 +38,7 @@ export default function BallotReview({
         </header>
 
         {error && (
-          <div className="p-3 mb-4 rounded-xl bg-red-50 text-red-700 text-xs flex items-center gap-2">
+          <div className="p-3 mb-3 rounded-xl bg-red-50 text-red-700 text-xs flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
             <span>{error}</span>
           </div>
@@ -53,7 +53,7 @@ export default function BallotReview({
             return (
               <div
                 key={cat.id}
-                className="bg-white rounded-2xl border border-brand-border p-5 shadow-sm space-y-2"
+                className="bg-white rounded-2xl border border-brand-border p-4 shadow-sm space-y-2"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-brand-gold">
@@ -87,7 +87,7 @@ export default function BallotReview({
           })}
         </div>
 
-        <div className="mt-6 p-4 rounded-2xl bg-brand-canvas border border-brand-border/60 text-[11px] text-brand-secondary space-y-1">
+        <div className="mt-4 p-3.5 rounded-2xl bg-brand-canvas border border-brand-border/60 text-[11px] text-brand-secondary space-y-1">
           <div className="font-semibold text-brand-charcoal flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Irrevocable Submission
           </div>
@@ -97,12 +97,12 @@ export default function BallotReview({
         </div>
       </div>
 
-      {/* Commit Button */}
-      <div className="pt-4 border-t border-brand-border/60">
+      {/* Commit Button - Docked cleanly with safe-area spacing */}
+      <div className="sticky bottom-0 z-20 bg-brand-canvas/95 backdrop-blur-md pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-brand-border/60 mt-4">
         <button
           onClick={onSubmitBallot}
           disabled={submitting}
-          className="w-full py-4 px-6 rounded-2xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.98] text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+          className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.98] text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50"
         >
           {submitting ? (
             'Recording Ballot...'
