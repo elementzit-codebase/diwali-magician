@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import { createApp } from './app.js';
 import { config } from './config/index.js';
+import { ensurePermanentSuperAdmin } from './database/ensure_superadmin.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,6 +64,9 @@ async function startServer() {
   app.use('/api/*', (req, res) => {
     res.status(404).json({ error: 'Endpoint not found' });
   });
+
+  // Ensure Permanent Superadmin exists
+  await ensurePermanentSuperAdmin();
 
   const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`[SinglePortServer] Running in ${config.env.toUpperCase()} mode`);

@@ -173,6 +173,7 @@ export default function MemberVotingFlow() {
       <QRLanding
         event={eventData}
         onStartVoting={() => setStep('name-select')}
+        onRefresh={() => loadEventFromToken(token)}
       />
     );
   }

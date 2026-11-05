@@ -20,7 +20,7 @@ describe('Phase 4 Management APIs Integration Tests', () => {
     await query('DELETE FROM categories');
     await query('DELETE FROM events');
     await query('DELETE FROM members');
-    await query('DELETE FROM admins');
+    await query('DELETE FROM admins WHERE email != 'admin@luxuryvoting.com'');
 
     // 2. Setup admin account and retrieve session cookie
     const setupRes = await request(app)
@@ -43,7 +43,7 @@ describe('Phase 4 Management APIs Integration Tests', () => {
     await query('DELETE FROM categories');
     await query('DELETE FROM events');
     await query('DELETE FROM members');
-    await query('DELETE FROM admins');
+    await query('DELETE FROM admins WHERE email != 'admin@luxuryvoting.com'');
     await pool.end();
   });
 

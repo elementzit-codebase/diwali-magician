@@ -40,7 +40,7 @@ export default function AdminPortal() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-brand-canvas">
-      {/* Mobile Header */}
+      {/* Mobile Top Header */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-brand-border sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-brand-red flex items-center justify-center text-white">
@@ -58,12 +58,13 @@ export default function AdminPortal() {
         </button>
       </header>
 
-      {/* Sidebar Navigation */}
+      {/* Fixed Sticky Sidebar on Desktop */}
       <aside
         className={`${
           mobileMenuOpen ? 'block' : 'hidden'
-        } md:block w-full md:w-64 bg-white border-r border-brand-border flex-shrink-0 z-30 md:min-h-screen flex flex-col justify-between p-4`}
+        } md:flex flex-col justify-between w-full md:w-64 bg-white border-r border-brand-border flex-shrink-0 z-30 md:sticky md:top-0 md:h-screen p-4`}
       >
+        {/* Top Header & Navigation Links */}
         <div className="space-y-6">
           <div className="hidden md:flex items-center gap-3 px-2 py-3 border-b border-brand-border/60">
             <div className="w-9 h-9 rounded-xl bg-brand-red flex items-center justify-center text-white shadow-sm">
@@ -99,16 +100,19 @@ export default function AdminPortal() {
           </nav>
         </div>
 
-        <div className="pt-4 border-t border-brand-border/60 space-y-3">
+        {/* User Info & Signout Anchored Strictly to the Bottom */}
+        <div className="pt-4 border-t border-brand-border/60 space-y-3 mt-auto">
           <div className="px-2">
-            <div className="text-[11px] font-medium text-brand-charcoal truncate">
-              {admin?.fullName}
+            <div className="text-[11px] font-bold text-brand-charcoal truncate">
+              {admin?.fullName || 'Event Administrator'}
             </div>
-            <div className="text-[10px] text-brand-secondary truncate">{admin?.email}</div>
+            <div className="text-[10px] text-brand-secondary truncate">
+              {admin?.email}
+            </div>
           </div>
           <button
             onClick={logout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-red-700 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium text-red-700 bg-red-50/50 hover:bg-red-100/70 border border-red-100 transition-colors"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
@@ -116,8 +120,8 @@ export default function AdminPortal() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 p-4 sm:p-8 max-w-6xl mx-auto w-full">
+      {/* Main Content Area (Independent Scroll Container) */}
+      <main className="flex-1 p-4 sm:p-8 max-w-6xl mx-auto w-full overflow-y-auto">
         {currentTab === 'dashboard' && <DashboardOverview onNavigate={handleNavigate} />}
         {currentTab === 'members' && <MemberManagement />}
         {currentTab === 'events' && (
@@ -129,4 +133,3 @@ export default function AdminPortal() {
     </div>
   );
 }
-

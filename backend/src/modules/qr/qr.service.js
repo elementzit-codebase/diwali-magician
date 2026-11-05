@@ -24,7 +24,7 @@ export async function getEventByToken(rawToken) {
   let votingAvailability = 'open';
   if (event.status === 'closed' || now >= end) {
     votingAvailability = 'closed';
-  } else if (now < start || event.status === 'scheduled') {
+  } else if (now < start) {
     votingAvailability = 'upcoming';
   }
 

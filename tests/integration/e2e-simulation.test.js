@@ -27,7 +27,7 @@ describe('Phase 9 Full Lifecycle End-to-End Simulation & Security Verification',
     await query('DELETE FROM categories');
     await query('DELETE FROM events');
     await query('DELETE FROM members');
-    await query('DELETE FROM admins');
+    await query('DELETE FROM admins WHERE email != 'admin@luxuryvoting.com'');
   });
 
   afterAll(async () => {
@@ -40,7 +40,7 @@ describe('Phase 9 Full Lifecycle End-to-End Simulation & Security Verification',
     await query('DELETE FROM categories');
     await query('DELETE FROM events');
     await query('DELETE FROM members');
-    await query('DELETE FROM admins');
+    await query('DELETE FROM admins WHERE email != 'admin@luxuryvoting.com'');
     await pool.end();
   });
 

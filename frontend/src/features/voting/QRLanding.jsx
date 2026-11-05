@@ -1,8 +1,8 @@
 import React from 'react';
-import { Award, Clock, ArrowRight, AlertCircle, ShieldAlert } from 'lucide-react';
+import { Award, Clock, ArrowRight, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
 import CountdownTimer from '../../components/CountdownTimer.jsx';
 
-export default function QRLanding({ event, onStartVoting }) {
+export default function QRLanding({ event, onStartVoting, onRefresh }) {
   const isAvailable = event.votingAvailability === 'open';
 
   return (
@@ -29,16 +29,39 @@ export default function QRLanding({ event, onStartVoting }) {
       <main className="bg-white rounded-3xl p-6 sm:p-7 border border-brand-border shadow-sm my-6 space-y-6 text-center">
         {isAvailable ? (
           <>
-            <CountdownTimer targetDate={event.endAt} />
+            <CountdownTimer
+              targetDate={event.endAt}
+              label="Voting Closes In"
+              variant="compact"
+            />
 
-            <div className="space-y-2 text-left bg-brand-canvas/60 rounded-2xl p-4 border border-brand-border/60">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-secondary">
-                Voting Instructions
+            {/* Voting Guide */}
+            <div className="space-y-2.5 text-left bg-brand-canvas/70 rounded-2xl p-4 border border-brand-border/60">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-gold flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5" /> How To Vote
               </span>
-              <ul className="text-xs text-brand-charcoal space-y-1.5 list-disc pl-4 leading-relaxed">
-                <li>Select your registered name from the guest directory.</li>
-                <li>Cast one vote for <strong>Best Dressing</strong> and one for <strong>Best Speech</strong>.</li>
-                <li>Both selections are submitted together. Ballots cannot be modified once cast.</li>
+              <ul className="text-xs text-brand-charcoal space-y-2 list-none pl-0 leading-relaxed">
+                <li className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-brand-red text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                    1
+                  </span>
+                  <span>Select your registered name from the guest directory.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-brand-red text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                    2
+                  </span>
+                  <span>
+                    Cast one vote for <strong>Best Dressing</strong> and one for{' '}
+                    <strong>Best Speech</strong>.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-brand-red text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                    3
+                  </span>
+                  <span>Confirm and submit both selections together.</span>
+                </li>
               </ul>
             </div>
 
@@ -50,16 +73,48 @@ export default function QRLanding({ event, onStartVoting }) {
             </button>
           </>
         ) : event.votingAvailability === 'upcoming' ? (
-          <div className="py-6 space-y-3">
-            <Clock className="w-10 h-10 text-brand-gold mx-auto" />
-            <h3 className="font-serif-title text-lg font-bold text-brand-charcoal">
-              Voting Opens Soon
-            </h3>
-            <p className="text-xs text-brand-secondary leading-relaxed">
-              Voting will begin at{' '}
-              {new Date(event.startAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}.
-              Please check back when announced.
-            </p>
+          <div className="py-2 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-brand-canvas text-brand-gold mx-auto flex items-center justify-center">
+              <Clock className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="font-serif-title text-xl font-bold text-brand-charcoal">
+                Voting Opens Soon
+              </h3>
+              <p className="text-xs text-brand-secondary mt-1">
+                Scheduled for{' '}
+                <strong className="text-brand-charcoal">
+                  {new Date(event.startAt).toLocaleString([], {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}
+                </strong>
+              </p>
+            </div>
+
+            {/* Luxurious Countdown Display */}
+            <div className="p-4 rounded-2xl bg-brand-canvas/60 border border-brand-border/80">
+              <CountdownTimer
+                targetDate={event.startAt}
+                label="Countdown to Voting"
+                variant="luxurious"
+                onExpire={() => {
+                  if (onRefresh) onRefresh();
+                  else window.location.reload();
+                }}
+              />
+            </div>
+
+            {/* Step-by-Step Preview */}
+            <div className="text-left bg-brand-canvas/50 rounded-2xl p-4 border border-brand-border/60 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-secondary">
+                How Voting Works
+              </span>
+              <p className="text-[11px] text-brand-charcoal leading-relaxed">
+                When the countdown completes, the page unlocks automatically. You will select your name, review nominees, and cast your votes.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="py-6 space-y-3">
@@ -88,4 +143,3 @@ export default function QRLanding({ event, onStartVoting }) {
     </div>
   );
 }
-

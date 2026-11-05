@@ -8,12 +8,12 @@ describe('Phase 3 Admin Authentication & One-Time Setup', () => {
 
   beforeAll(async () => {
     // Ensure clean admins table for test suite
-    await query('DELETE FROM admins');
+    await query('DELETE FROM admins WHERE email != 'admin@luxuryvoting.com'');
   });
 
   afterAll(async () => {
     // Keep database in zero seed state
-    await query('DELETE FROM admins');
+    await query('DELETE FROM admins WHERE email != 'admin@luxuryvoting.com'');
     await pool.end();
   });
 
