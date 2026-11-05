@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS events (
     description TEXT,
     start_at TIMESTAMPTZ NOT NULL,
     end_at TIMESTAMPTZ NOT NULL,
+    duration_minutes INTEGER NOT NULL DEFAULT 5,
     status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'active', 'closed')),
     access_token_hash VARCHAR(64) NOT NULL UNIQUE,
     created_by UUID REFERENCES admins(id) ON DELETE SET NULL,
