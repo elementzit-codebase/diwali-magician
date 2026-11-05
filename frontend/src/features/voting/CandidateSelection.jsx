@@ -4,16 +4,19 @@ import { Award, Check, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
 export default function CandidateSelection({
   categories,
   voterName,
+  initialSelections = {},
+  initialCategoryIndex = 0,
   onProceedToReview,
   onCancelSession,
 }) {
-  const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
+  const [activeCategoryIndex, setActiveCategoryIndex] = useState(initialCategoryIndex);
   // Store selections as { categoryId: candidateMemberId }
-  const [selections, setSelections] = useState({});
+  const [selections, setSelections] = useState(initialSelections);
   const [error, setError] = useState('');
 
   const currentCategory = categories[activeCategoryIndex];
   const isLastCategory = activeCategoryIndex === categories.length - 1;
+  const allCategoriesSelected = categories.length > 0 && categories.every((c) => Boolean(selections[c.id]));
 
   function handleSelectCandidate(categoryId, candidateId) {
     setError('');
@@ -24,9 +27,9 @@ export default function CandidateSelection({
   }
 
   function handleNextCategory() {
-    const currentSelected = selections[currentCategory.id];
+    const currentSelected = selections[currentCategory?.id];
     if (!currentSelected) {
-      setError(`Please select a candidate for ${currentCategory.name}`);
+      setError(`Please select a candidate for ${currentCategory?.name}`);
       return;
     }
 
@@ -41,6 +44,20 @@ export default function CandidateSelection({
       }
       onProceedToReview(selections);
     }
+  }
+
+  function handleDirectReview() {
+    const currentSelected = selections[currentCategory?.id];
+    if (!currentSelected) {
+      setError(`Please select a candidate for ${currentCategory?.name}`);
+      return;
+    }
+    const missing = categories.find((c) => !selections[c.id]);
+    if (missing) {
+      setError(`Please make a selection for ${missing.name}`);
+      return;
+    }
+    onProceedToReview(selections);
   }
 
   return (
@@ -163,13 +180,23 @@ export default function CandidateSelection({
 
       {/* Docked Action Bar - Always visible without forcing empty scroll space */}
       <div className="sticky bottom-0 z-20 bg-brand-canvas/95 backdrop-blur-md pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-brand-border/60 mt-auto">
-        <button
-          onClick={handleNextCategory}
-          className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.98] text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all"
-        >
-          {isLastCategory ? 'Review Ballot' : 'Next Category'}{' '}
-          <ArrowRight className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          {allCategoriesSelected && !isLastCategory && (
+            <button
+              onClick={handleDirectReview}
+              className="py-3.5 sm:py-4 px-4 rounded-2xl bg-white border border-brand-border hover:bg-brand-canvas active:scale-[0.98] text-brand-charcoal font-semibold text-xs transition-all shadow-xs"
+            >
+              Back to Review
+            </button>
+          )}
+          <button
+            onClick={handleNextCategory}
+            className="flex-1 py-3.5 sm:py-4 px-6 rounded-2xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.98] text-white font-semibold text-sm shadow-md flex items-center justify-center gap-2 transition-all"
+          >
+            {isLastCategory ? 'Review Ballot' : allCategoriesSelected ? 'Save & Review' : 'Next Category'}{' '}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -20,6 +20,7 @@ export default function MemberVotingFlow() {
   const [voterSession, setVoterSession] = useState(null);
   const [ballotContext, setBallotContext] = useState(null);
   const [selections, setSelections] = useState({});
+  const [editCategoryIndex, setEditCategoryIndex] = useState(0);
   const [submissionInfo, setSubmissionInfo] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -82,6 +83,11 @@ export default function MemberVotingFlow() {
   function handleProceedToReview(collectedSelections) {
     setSelections(collectedSelections);
     setStep('review');
+  }
+
+  function handleEditSelection(targetIndex = 0) {
+    setEditCategoryIndex(targetIndex);
+    setStep('voting');
   }
 
   // Step 7: Final Atomic Submit
@@ -196,6 +202,8 @@ export default function MemberVotingFlow() {
       <CandidateSelection
         categories={ballotContext.categories}
         voterName={voterSession.memberName}
+        initialSelections={selections}
+        initialCategoryIndex={editCategoryIndex}
         onProceedToReview={handleProceedToReview}
         onCancelSession={handleCancelSession}
       />
@@ -210,7 +218,7 @@ export default function MemberVotingFlow() {
         voterName={voterSession.memberName}
         submitting={submitting}
         error={errorMessage}
-        onEditSelection={() => setStep('voting')}
+        onEditSelection={handleEditSelection}
         onSubmitBallot={handleSubmitBallot}
       />
     );

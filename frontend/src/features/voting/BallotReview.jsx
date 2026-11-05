@@ -16,7 +16,7 @@ export default function BallotReview({
         {/* Navigation */}
         <div className="flex items-center justify-between pt-2 mb-2">
           <button
-            onClick={onEditSelection}
+            onClick={() => onEditSelection(0)}
             disabled={submitting}
             className="flex items-center gap-1 text-xs text-brand-secondary hover:text-brand-charcoal transition-colors py-1 px-2 rounded-lg"
           >
@@ -46,7 +46,7 @@ export default function BallotReview({
 
         {/* Selections Review Cards */}
         <div className="space-y-3">
-          {categories.map((cat) => {
+          {categories.map((cat, idx) => {
             const selectedCandidateId = selections[cat.id];
             const candidate = cat.candidates.find((c) => c.id === selectedCandidateId);
 
@@ -60,7 +60,7 @@ export default function BallotReview({
                     {cat.name}
                   </span>
                   <button
-                    onClick={onEditSelection}
+                    onClick={() => onEditSelection(idx)}
                     className="text-[11px] text-brand-red hover:underline font-medium"
                   >
                     Change
