@@ -80,6 +80,20 @@ export default function MemberManagement() {
     }
   }
 
+  async function openAddModal() {
+    setEditMember(null);
+    setFullName('');
+    setIsActive(true);
+    setActionError('');
+    try {
+      const res = await api.get('/api/members/next-code');
+      setMemberCode(res.nextCode || 'MEM-001');
+    } catch {
+      setMemberCode('MEM-001');
+    }
+    setIsAddOpen(true);
+  }
+
   function openEdit(m) {
     setEditMember(m);
     setMemberCode(m.member_code);
@@ -100,14 +114,7 @@ export default function MemberManagement() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              setEditMember(null);
-              setMemberCode('');
-              setFullName('');
-              setIsActive(true);
-              setActionError('');
-              setIsAddOpen(true);
-            }}
+            onClick={openAddModal}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-red hover:bg-brand-darkRed text-white text-xs font-medium shadow-sm transition-all"
           >
             <UserPlus className="w-4 h-4" /> Add Member
@@ -211,17 +218,35 @@ export default function MemberManagement() {
             </div>
           )}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-brand-secondary mb-1">
-              Member Code
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-secondary">
+                Member Code (Auto-Generated)
+              </label>
+              {!editMember && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await api.get('/api/members/next-code');
+                      setMemberCode(res.nextCode);
+                    } catch {}
+                  }}
+                  className="text-[10px] text-brand-gold hover:underline font-semibold"
+                >
+                  Regenerate
+                </button>
+              )}
+            </div>
             <input
               type="text"
-              required
               value={memberCode}
               onChange={(e) => setMemberCode(e.target.value)}
-              placeholder="e.g. MEM-001"
-              className="w-full px-3.5 py-2 rounded-xl border border-brand-border text-sm focus:outline-none focus:border-brand-red font-mono"
+              placeholder="e.g. MEM-001 (auto-filled)"
+              className="w-full px-3.5 py-2 rounded-xl border border-brand-border bg-brand-canvas/40 text-sm focus:outline-none focus:border-brand-red font-mono"
             />
+            <p className="text-[10px] text-brand-secondary mt-1">
+              Automatically sequentially generated. You can also customize it if needed.
+            </p>
           </div>
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-brand-secondary mb-1">

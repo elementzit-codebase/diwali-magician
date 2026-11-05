@@ -3,10 +3,11 @@ import { z } from 'zod';
 export const createMemberSchema = z.object({
   body: z.object({
     memberCode: z
-      .string({ required_error: 'Member code is required' })
+      .string()
       .trim()
-      .min(1, 'Member code cannot be empty')
-      .max(50, 'Member code is too long'),
+      .max(50, 'Member code is too long')
+      .optional()
+      .or(z.literal('')),
     fullName: z
       .string({ required_error: 'Full name is required' })
       .trim()

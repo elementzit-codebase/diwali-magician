@@ -41,18 +41,46 @@ export async function getMemberById(id) {
   return res.rows[0] || null;
 }
 
+export async function getNextMemberCode() {
+  // Finds the highest existing numeric MEM-XXX code and returns next, e.g. MEM-001, MEM-002
+  const res = await query(`
+    SELECT member_code
+    FROM members
+    WHERE member_code ~ '^MEM-[0-9]+$'
+    ORDER BY substring(member_code from 5)::int DESC
+    LIMIT 1;
+  `);
+
+  if (res.rowCount === 0) {
+    // If no numbered members exist, check total count as fallback
+    const totalRes = await query(`SELECT count(*)::int AS count FROM members`);
+    const nextNum = (totalRes.rows[0]?.count || 0) + 1;
+    return `MEM-${String(nextNum).padStart(3, '0')}`;
+  }
+
+  const lastCode = res.rows[0].member_code;
+  const lastNum = parseInt(lastCode.replace('MEM-', ''), 10);
+  return `MEM-${String(lastNum + 1).padStart(3, '0')}`;
+}
+
 export async function createMember({ memberCode, fullName, isActive = true }) {
+  // If memberCode is omitted or blank, auto-generate sequentially
+  let code = memberCode?.trim();
+  if (!code) {
+    code = await getNextMemberCode();
+  }
+
   // Check duplicate member_code
-  const existing = await query(`SELECT id FROM members WHERE member_code = $1`, [memberCode]);
+  const existing = await query(`SELECT id FROM members WHERE member_code = $1`, [code]);
   if (existing.rowCount > 0) {
-    throw new AppError(`Member code '${memberCode}' is already registered`, 409, 'DUPLICATE_MEMBER_CODE');
+    throw new AppError(`Member code '${code}' is already registered`, 409, 'DUPLICATE_MEMBER_CODE');
   }
 
   const res = await query(
     `INSERT INTO members (member_code, full_name, is_active)
      VALUES ($1, $2, $3)
      RETURNING id, member_code, full_name, is_active, created_at, updated_at`,
-    [memberCode, fullName, isActive]
+    [code, fullName, isActive]
   );
 
   return res.rows[0];

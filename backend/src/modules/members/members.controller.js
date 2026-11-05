@@ -6,6 +6,7 @@ import {
   updateMember,
   deactivateMember,
   importMembersFromCsv,
+  getNextMemberCode,
 } from './members.service.js';
 import { requireAdminAuth } from '../../middleware/adminAuth.js';
 import { validate } from '../../middleware/validate.js';
@@ -27,6 +28,15 @@ router.get('/', async (req, res, next) => {
     const { search, isActive, limit, offset } = req.query;
     const data = await listMembers({ search, isActive, limit, offset });
     res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/next-code', async (req, res, next) => {
+  try {
+    const nextCode = await getNextMemberCode();
+    res.json({ nextCode });
   } catch (err) {
     next(err);
   }
