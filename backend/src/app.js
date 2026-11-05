@@ -15,6 +15,11 @@ import resultsRoutes from './modules/results/results.controller.js';
 export function createApp() {
   const app = express();
 
+  // Trust reverse proxy (Nginx, Caddy, Cloudflare, etc.)
+  if (config.trustProxy) {
+    app.set('trust proxy', config.trustProxy);
+  }
+
   // Basic security headers configured for single-origin React delivery
   app.use(
     helmet({

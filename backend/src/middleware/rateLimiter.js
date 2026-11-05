@@ -3,7 +3,8 @@ import { config } from '../config/index.js';
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: config.isProduction ? 15 : 100,
+  max: config.isProduction ? 30 : 100,
+  validate: { xForwardedForHeader: false },
   skip: () => !config.isProduction,
   standardHeaders: true,
   legacyHeaders: false,
@@ -15,7 +16,8 @@ export const authLimiter = rateLimit({
 
 export const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: config.isProduction ? 300 : 5000,
+  max: config.isProduction ? 500 : 5000,
+  validate: { xForwardedForHeader: false },
   skip: () => !config.isProduction,
   standardHeaders: true,
   legacyHeaders: false,

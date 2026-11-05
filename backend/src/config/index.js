@@ -5,6 +5,7 @@ export const config = {
   env: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
   port: parseInt(process.env.PORT, 10) || 5000,
+  trustProxy: process.env.TRUST_PROXY || (process.env.NODE_ENV === 'production' ? 1 : false),
   db: {
     host: process.env.DB_HOST || '127.0.0.1',
     port: parseInt(process.env.DB_PORT, 10) || 5432,
