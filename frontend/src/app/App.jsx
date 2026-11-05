@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AdminAuthProvider, useAdminAuth } from '../hooks/useAdminAuth.jsx';
 import AdminAuthPage from '../features/auth/AdminAuthPage.jsx';
 import AdminPortal from '../features/admin/AdminPortal.jsx';
+import MemberVotingFlow from '../features/voting/MemberVotingFlow.jsx';
 import { Award, QrCode } from 'lucide-react';
 
 function AdminRouteGuard() {
@@ -46,7 +47,7 @@ function MemberLandingPlaceholder() {
           Scan Event QR Code
         </h2>
         <p className="text-xs text-brand-secondary leading-relaxed">
-          Please scan the common event QR code displayed at your venue or table to cast your selections for Best Dressing and Best Speech.
+          Please scan the official event QR code displayed on tables or projected at your venue to cast your votes.
         </p>
         <div className="pt-2">
           <a
@@ -71,6 +72,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MemberLandingPlaceholder />} />
+          <Route path="/vote" element={<MemberVotingFlow />} />
           <Route path="/admin/*" element={<AdminRouteGuard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
