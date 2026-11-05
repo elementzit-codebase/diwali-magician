@@ -236,7 +236,7 @@ export default function DisplayStage() {
         }
 
         // Vertical spacing: Name at centerY - offset, Vote Count clearly below it
-        const gap = Math.max(45, Math.floor(nameFontSize * 0.75));
+        const gap = Math.max(70, Math.floor(nameFontSize * 0.85));
         const nameY = card.centerY - gap / 2;
         const countY = card.centerY + gap / 2 + 25;
 
@@ -250,7 +250,8 @@ export default function DisplayStage() {
           ? `★ Joint Winner (${voteLabel}) ★`
           : `(${voteLabel})`;
 
-        const countFontSize = Math.min(50, Math.max(38, Math.floor(nameFontSize * 0.45)));
+        // Increased vote count font size for better visibility on stage & screen displays
+        const countFontSize = Math.min(80, Math.max(62, Math.floor(nameFontSize * 0.68)));
         ctx.font = `bold ${countFontSize}px "Plus Jakarta Sans", sans-serif`;
         ctx.fillStyle = '#B32635'; // Luxury Red Accent
         ctx.fillText(countText, card.centerX, countY);
