@@ -5,18 +5,16 @@ export const createEventSchema = z.object({
     title: z
       .string({ required_error: 'Event title is required' })
       .trim()
-      .min(3, 'Title must be at least 3 characters')
+      .min(2, 'Title must be at least 2 characters')
       .max(200, 'Title is too long'),
     description: z.string().trim().optional(),
-    startAt: z.string({ required_error: 'Start time is required' }).datetime(),
-    endAt: z.string({ required_error: 'End time is required' }).datetime(),
+    durationMinutes: z.coerce.number().int().min(1, 'Duration must be at least 1 minute').max(1440).default(5),
+    startAt: z.string().datetime().optional(),
+    endAt: z.string().datetime().optional(),
     categories: z
       .array(z.string().trim().min(2))
       .optional()
       .default(['Best Dressing', 'Best Speech']),
-  }).refine((data) => new Date(data.endAt) > new Date(data.startAt), {
-    message: 'End time must be after start time',
-    path: ['endAt'],
   }),
 });
 
@@ -25,8 +23,9 @@ export const updateEventSchema = z.object({
     id: z.string().uuid('Invalid event ID format'),
   }),
   body: z.object({
-    title: z.string().trim().min(3).max(200).optional(),
+    title: z.string().trim().min(2).max(200).optional(),
     description: z.string().trim().optional(),
+    durationMinutes: z.coerce.number().int().min(1).max(1440).optional(),
     startAt: z.string().datetime().optional(),
     endAt: z.string().datetime().optional(),
     status: z.enum(['draft', 'scheduled', 'active', 'closed']).optional(),

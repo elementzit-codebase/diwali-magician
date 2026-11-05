@@ -4,6 +4,7 @@ import {
   getEventById,
   createEvent,
   updateEvent,
+  startVotingNow,
   closeVotingEarly,
   registerEventMembers,
   getEventMembers,
@@ -36,16 +37,27 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', validate(createEventSchema), async (req, res, next) => {
   try {
-    const { title, description, startAt, endAt, categories } = req.body;
+    const { title, description, durationMinutes, startAt, endAt, categories } = req.body;
     const event = await createEvent({
       title,
       description,
+      durationMinutes,
       startAt,
       endAt,
       categories,
       adminId: req.admin.id,
     });
     res.status(201).json({ message: 'Event created successfully', event });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/:id/start', validate(eventIdParamSchema), async (req, res, next) => {
+  try {
+    const { durationMinutes } = req.body;
+    const event = await startVotingNow(req.params.id, durationMinutes);
+    res.json({ message: 'Voting started successfully', event });
   } catch (err) {
     next(err);
   }

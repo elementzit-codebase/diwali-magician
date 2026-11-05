@@ -29,11 +29,11 @@ export default function EventManagement({ onSelectEventForQR }) {
   // Form states
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [startAt, setStartAt] = useState('');
-  const [endAt, setEndAt] = useState('');
+  const [durationMinutes, setDurationMinutes] = useState(5);
   const [categoryName, setCategoryName] = useState('');
   const [selectedMemberIds, setSelectedMemberIds] = useState(new Set());
   const [error, setError] = useState('');
+  const [startingEventId, setStartingEventId] = useState(null);
 
   useEffect(() => {
     loadEvents();
@@ -68,18 +68,32 @@ export default function EventManagement({ onSelectEventForQR }) {
       await api.post('/api/events', {
         title,
         description,
-        startAt: new Date(startAt).toISOString(),
-        endAt: new Date(endAt).toISOString(),
+        durationMinutes: parseInt(durationMinutes, 10) || 5,
         categories: ['Best Dressing', 'Best Speech'],
       });
       setIsCreateOpen(false);
       setTitle('');
       setDescription('');
-      setStartAt('');
-      setEndAt('');
+      setDurationMinutes(5);
       loadEvents();
     } catch (err) {
       setError(err.message || 'Failed to create event');
+    }
+  }
+
+  async function handleStartVoting(eventId, minutes) {
+    if (!window.confirm(`Start voting now for ${minutes || 5} minutes? Attendee QR codes will unlock immediately!`)) return;
+    setStartingEventId(eventId);
+    try {
+      await api.post(`/api/events/${eventId}/start`, { durationMinutes: minutes || 5 });
+      await loadEvents();
+      if (onSelectEventForQR) {
+        onSelectEventForQR(eventId);
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to start voting');
+    } finally {
+      setStartingEventId(null);
     }
   }
 
@@ -189,18 +203,22 @@ export default function EventManagement({ onSelectEventForQR }) {
               <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-brand-border/60">
                 <div className="space-y-1">
                   <div className="text-brand-secondary flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-brand-gold" /> Start Time:
+                    <Clock className="w-3.5 h-3.5 text-brand-gold" /> Voting Duration:
                   </div>
-                  <div className="font-medium text-brand-charcoal">
-                    {new Date(evt.start_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                  <div className="font-semibold text-brand-charcoal">
+                    {evt.duration_minutes || 5} Minutes
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-brand-secondary flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-brand-red" /> End Time:
+                    <Clock className="w-3.5 h-3.5 text-brand-red" /> Current Status:
                   </div>
                   <div className="font-medium text-brand-charcoal">
-                    {new Date(evt.end_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                    {evt.status === 'active' && evt.end_at
+                      ? `Voting ends at ${new Date(evt.end_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      : evt.status === 'closed'
+                      ? 'Voting Concluded'
+                      : 'Waiting to Start'}
                   </div>
                 </div>
               </div>
@@ -215,6 +233,22 @@ export default function EventManagement({ onSelectEventForQR }) {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 pt-2">
+                {/* START VOTING BUTTON */}
+                {evt.status !== 'closed' && (
+                  <button
+                    onClick={() => handleStartVoting(evt.id, evt.duration_minutes)}
+                    disabled={startingEventId === evt.id}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold text-white transition-all shadow-sm flex items-center gap-1.5 ${
+                      evt.status === 'active'
+                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                        : 'bg-brand-red hover:bg-brand-darkRed active:scale-[0.98]'
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    {evt.status === 'active' ? 'Restart / Extend Time' : 'Start Voting Now'}
+                  </button>
+                )}
+
                 <button
                   onClick={() => openEnrollModal(evt)}
                   className="px-3 py-1.5 rounded-lg border border-brand-border hover:bg-brand-canvas text-xs font-medium text-brand-charcoal transition-colors flex items-center gap-1"
@@ -294,30 +328,24 @@ export default function EventManagement({ onSelectEventForQR }) {
               className="w-full p-3 rounded-xl border border-brand-border text-xs focus:outline-none focus:border-brand-red"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-secondary mb-1">
-                Start Time
-              </label>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-brand-secondary mb-1">
+              Voting Duration (Minutes)
+            </label>
+            <div className="flex items-center gap-2">
               <input
-                type="datetime-local"
+                type="number"
+                min="1"
+                max="1440"
                 required
-                value={startAt}
-                onChange={(e) => setStartAt(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-brand-border text-xs focus:outline-none focus:border-brand-red"
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(e.target.value)}
+                placeholder="5"
+                className="w-32 px-3.5 py-2 rounded-xl border border-brand-border text-xs focus:outline-none focus:border-brand-red font-semibold text-brand-charcoal"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-secondary mb-1">
-                End Time
-              </label>
-              <input
-                type="datetime-local"
-                required
-                value={endAt}
-                onChange={(e) => setEndAt(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-brand-border text-xs focus:outline-none focus:border-brand-red"
-              />
+              <span className="text-xs text-brand-secondary">
+                minutes (starts when you click <strong>"Start Voting Now"</strong>)
+              </span>
             </div>
           </div>
           <p className="text-[11px] text-brand-secondary">
@@ -325,7 +353,7 @@ export default function EventManagement({ onSelectEventForQR }) {
           </p>
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-brand-red hover:bg-brand-darkRed text-white text-xs font-medium transition-all shadow-sm"
+            className="w-full py-2.5 rounded-xl bg-brand-red hover:bg-brand-darkRed text-white text-xs font-semibold transition-all shadow-sm"
           >
             Create Event & Generate Access Token
           </button>

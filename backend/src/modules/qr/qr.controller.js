@@ -25,7 +25,7 @@ router.get('/access/:token', apiLimiter, async (req, res, next) => {
 // 2. ADMIN ONLY: Get or load permanent Event QR code without changing/invalidating it
 router.get('/event/:eventId', requireAdminAuth, async (req, res, next) => {
   try {
-    const { rawToken, title, isExisting } = await getOrCreateEventToken(req.params.eventId);
+    const { rawToken, title, event, isExisting } = await getOrCreateEventToken(req.params.eventId);
     const accessUrl = `${req.protocol}://${req.get('host')}/vote?token=${rawToken}`;
     const qrDataUrl = await generateQrDataUrl(accessUrl);
 
@@ -34,6 +34,7 @@ router.get('/event/:eventId', requireAdminAuth, async (req, res, next) => {
       rawToken,
       accessUrl,
       qrDataUrl,
+      event,
     });
   } catch (err) {
     next(err);

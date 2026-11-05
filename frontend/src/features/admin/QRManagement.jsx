@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api.js';
+import CountdownTimer from '../../components/CountdownTimer.jsx';
 import {
   QrCode,
   Copy,
@@ -11,17 +12,27 @@ import {
   ExternalLink,
   Image as ImageIcon,
   Sparkles,
+  Trophy,
+  Crown,
+  Play,
+  Clock,
 } from 'lucide-react';
 
 export default function QRManagement({ preselectedEventId }) {
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(preselectedEventId || '');
   const [tokenData, setTokenData] = useState(null);
+  const [activeEvent, setActiveEvent] = useState(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Template feature states
+  // Winners display state when voting ends
+  const [winnersData, setWinnersData] = useState(null);
+  const [loadingWinners, setLoadingWinners] = useState(false);
+  const [startingVoting, setStartingVoting] = useState(false);
+
+  // Template feature states (Default enabled for convenience)
   const [useTemplate, setUseTemplate] = useState(false);
   const [templatedImageSrc, setTemplatedImageSrc] = useState(null);
   const [generatingTemplate, setGeneratingTemplate] = useState(false);
@@ -69,13 +80,55 @@ export default function QRManagement({ preselectedEventId }) {
     if (!eventId) return;
     setLoading(true);
     setMessage('');
+    setWinnersData(null);
     try {
       const res = await api.get(`/api/qr/event/${eventId}`);
       setTokenData(res);
+      if (res.event) {
+        setActiveEvent(res.event);
+        checkAndFetchWinners(res.event);
+      }
     } catch (err) {
       console.error('Failed to load QR code:', err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function checkAndFetchWinners(eventObj) {
+    if (!eventObj) return;
+    const now = Date.now();
+    const isPast = eventObj.end_at && new Date(eventObj.end_at).getTime() <= now;
+    if (eventObj.status === 'closed' || isPast) {
+      fetchEventWinners(eventObj.id);
+    }
+  }
+
+  async function fetchEventWinners(eventId) {
+    if (!eventId) return;
+    setLoadingWinners(true);
+    try {
+      const res = await api.get(`/api/results/admin/${eventId}`);
+      setWinnersData(res);
+    } catch (err) {
+      console.error('Results not yet unsealed:', err);
+    } finally {
+      setLoadingWinners(false);
+    }
+  }
+
+  async function handleStartEventVoting(eventId, minutes) {
+    if (!eventId) return;
+    setStartingVoting(true);
+    try {
+      const res = await api.post(`/api/events/${eventId}/start`, { durationMinutes: minutes || 5 });
+      setMessage(`Voting started! Duration: ${minutes || 5} minutes`);
+      await loadEvents();
+      await loadEventQR(eventId);
+    } catch (err) {
+      alert(err.message || 'Failed to start voting');
+    } finally {
+      setStartingVoting(false);
     }
   }
 
@@ -135,12 +188,13 @@ export default function QRManagement({ preselectedEventId }) {
 
   // Composite QR code inside the golden white frame of Template BNI
   function renderTemplateImage(qrDataUrl) {
+    if (!qrDataUrl) return;
     setGeneratingTemplate(true);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
     const templateImg = new Image();
-    templateImg.crossOrigin = 'anonymous';
+    // Do not set crossOrigin for same-origin local assets
     templateImg.src = '/template-bni.png';
 
     templateImg.onload = () => {
@@ -152,7 +206,6 @@ export default function QRManagement({ preselectedEventId }) {
 
       // Load QR code image
       const qrImg = new Image();
-      qrImg.crossOrigin = 'anonymous';
       qrImg.src = qrDataUrl;
 
       qrImg.onload = () => {
@@ -172,12 +225,12 @@ export default function QRManagement({ preselectedEventId }) {
         ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
         // Add subtle event helper subtitle below QR
-        const activeEvent = events.find((e) => e.id === selectedEventId);
-        if (activeEvent?.title) {
+        const activeEvt = events.find((e) => e.id === selectedEventId) || activeEvent;
+        if (activeEvt?.title) {
           ctx.font = 'bold 72px "Plus Jakarta Sans", sans-serif';
           ctx.fillStyle = '#252525';
           ctx.textAlign = 'center';
-          ctx.fillText(activeEvent.title, boxX + boxW / 2, qrY + qrSize + 90);
+          ctx.fillText(activeEvt.title, boxX + boxW / 2, qrY + qrSize + 90);
         }
 
         ctx.font = '600 52px "Plus Jakarta Sans", sans-serif';
@@ -185,19 +238,28 @@ export default function QRManagement({ preselectedEventId }) {
         ctx.textAlign = 'center';
         ctx.fillText('Scan with mobile camera to vote', boxX + boxW / 2, qrY + qrSize + 170);
 
-        const dataUrl = canvas.toDataURL('image/png', 1.0);
-        setTemplatedImageSrc(dataUrl);
-        setGeneratingTemplate(false);
+        try {
+          const dataUrl = canvas.toDataURL('image/png', 0.92);
+          setTemplatedImageSrc(dataUrl);
+        } catch (err) {
+          console.error('Canvas export error:', err);
+          // Fallback gracefully to standalone QR if canvas export fails
+          setUseTemplate(false);
+        } finally {
+          setGeneratingTemplate(false);
+        }
       };
 
-      qrImg.onerror = () => {
+      qrImg.onerror = (e) => {
+        console.error('Failed to load QR code image:', e);
         setGeneratingTemplate(false);
       };
     };
 
-    templateImg.onerror = () => {
-      console.error('Failed to load /template-bni.png');
+    templateImg.onerror = (e) => {
+      console.error('Failed to load /template-bni.png:', e);
       setGeneratingTemplate(false);
+      setUseTemplate(false);
     };
   }
 
@@ -276,6 +338,97 @@ export default function QRManagement({ preselectedEventId }) {
       {/* QR Display Card */}
       {tokenData && (
         <div className="bg-white rounded-2xl border border-brand-border p-6 sm:p-8 shadow-sm text-center space-y-6 animate-fade-in">
+          {/* TOP COUNTDOWN & WINNER BAR */}
+          {activeEvent && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-brand-canvas/70 border border-brand-border space-y-3">
+              {activeEvent.status === 'active' && activeEvent.end_at ? (
+                <div>
+                  <CountdownTimer
+                    targetDate={activeEvent.end_at}
+                    label="Active Voting Concludes In"
+                    variant="luxurious"
+                    onExpire={() => {
+                      fetchEventWinners(activeEvent.id);
+                      loadEvents();
+                      loadEventQR(activeEvent.id);
+                    }}
+                  />
+                </div>
+              ) : activeEvent.status === 'closed' || (activeEvent.end_at && new Date(activeEvent.end_at).getTime() <= Date.now()) ? (
+                <div className="space-y-3">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                    <Check className="w-3.5 h-3.5" /> Voting Has Concluded
+                  </div>
+
+                  {loadingWinners ? (
+                    <div className="text-xs text-brand-secondary py-3 flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-brand-gold" /> Loading official winners...
+                    </div>
+                  ) : winnersData?.categories ? (
+                    <div className="space-y-3 pt-2">
+                      <div className="font-serif-title text-base sm:text-lg font-bold text-brand-charcoal flex items-center justify-center gap-2">
+                        <Trophy className="w-5 h-5 text-brand-gold" /> Official Award Winners
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto text-left">
+                        {winnersData.categories.map((cat) => (
+                          <div
+                            key={cat.id}
+                            className="p-3.5 rounded-xl bg-white border border-brand-border shadow-sm space-y-1.5"
+                          >
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-gold">
+                              {cat.name}
+                            </span>
+                            {cat.winners && cat.winners.length > 0 ? (
+                              cat.winners.map((win) => (
+                                <div key={win.memberId} className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5 font-bold text-xs text-brand-charcoal">
+                                    <Crown className="w-3.5 h-3.5 text-brand-gold" />
+                                    {win.fullName}
+                                  </div>
+                                  <span className="text-[11px] font-semibold text-brand-red bg-brand-red/10 px-2 py-0.5 rounded-md">
+                                    {win.voteCount} votes
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-xs text-brand-secondary italic">No votes cast</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => fetchEventWinners(activeEvent.id)}
+                      className="px-4 py-2 rounded-xl bg-brand-gold text-white text-xs font-semibold hover:bg-brand-gold/90 transition-all"
+                    >
+                      Show Winners
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-2">
+                  <div className="text-left space-y-0.5">
+                    <div className="text-xs font-bold text-brand-charcoal flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-brand-gold" /> Voting Scheduled ({activeEvent.duration_minutes || 5} min duration)
+                    </div>
+                    <div className="text-[11px] text-brand-secondary">
+                      Attendees scanning this QR will see the waiting screen until you click Start Voting.
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleStartEventVoting(activeEvent.id, activeEvent.duration_minutes)}
+                    disabled={startingVoting}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-brand-red hover:bg-brand-darkRed active:scale-[0.98] text-white text-xs font-bold shadow-md flex items-center justify-center gap-1.5 transition-all shrink-0"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-white" />
+                    {startingVoting ? 'Starting...' : 'Start Voting Now'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Template Switch Button */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-brand-canvas border border-brand-border/80">
             <div className="flex items-center gap-3 text-left">

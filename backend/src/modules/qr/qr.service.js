@@ -6,7 +6,7 @@ import { AppError } from '../../middleware/errorHandler.js';
 export async function getEventByToken(rawToken) {
   const tokenHash = hashToken(rawToken);
   const res = await query(
-    `SELECT e.id, e.title, e.description, e.start_at, e.end_at, e.status
+    `SELECT e.id, e.title, e.description, e.start_at, e.end_at, e.duration_minutes, e.status
      FROM events e
      WHERE e.access_token_hash = $1`,
     [tokenHash]
@@ -18,14 +18,29 @@ export async function getEventByToken(rawToken) {
 
   const event = res.rows[0];
   const now = new Date();
-  const start = new Date(event.start_at);
-  const end = new Date(event.end_at);
 
-  let votingAvailability = 'open';
-  if (event.status === 'closed' || now >= end) {
+  let votingAvailability = 'upcoming';
+  if (event.status === 'closed') {
     votingAvailability = 'closed';
-  } else if (now < start) {
+  } else if (event.status === 'active' && event.end_at) {
+    const end = new Date(event.end_at);
+    if (now >= end) {
+      votingAvailability = 'closed';
+    } else {
+      votingAvailability = 'open';
+    }
+  } else if (event.status === 'draft' || !event.start_at) {
     votingAvailability = 'upcoming';
+  } else if (event.start_at && event.end_at) {
+    const start = new Date(event.start_at);
+    const end = new Date(event.end_at);
+    if (now >= end) {
+      votingAvailability = 'closed';
+    } else if (now >= start) {
+      votingAvailability = 'open';
+    } else {
+      votingAvailability = 'upcoming';
+    }
   }
 
   return {
@@ -35,6 +50,7 @@ export async function getEventByToken(rawToken) {
       description: event.description,
       startAt: event.start_at,
       endAt: event.end_at,
+      durationMinutes: event.duration_minutes || 5,
       status: event.status,
       votingAvailability,
       serverTime: now.toISOString(),
@@ -44,7 +60,7 @@ export async function getEventByToken(rawToken) {
 
 export async function getOrCreateEventToken(eventId) {
   const res = await query(
-    `SELECT id, title, raw_access_token, access_token_hash FROM events WHERE id = $1`,
+    `SELECT id, title, start_at, end_at, duration_minutes, status, raw_access_token, access_token_hash FROM events WHERE id = $1`,
     [eventId]
   );
 
@@ -56,7 +72,12 @@ export async function getOrCreateEventToken(eventId) {
 
   // If already generated, return the existing fixed token
   if (event.raw_access_token) {
-    return { rawToken: event.raw_access_token, title: event.title, isExisting: true };
+    return {
+      rawToken: event.raw_access_token,
+      title: event.title,
+      event,
+      isExisting: true,
+    };
   }
 
   // Otherwise generate and store permanently
@@ -70,7 +91,12 @@ export async function getOrCreateEventToken(eventId) {
     [tokenHash, rawToken, eventId]
   );
 
-  return { rawToken, title: event.title, isExisting: false };
+  return {
+    rawToken,
+    title: event.title,
+    event: { ...event, raw_access_token: rawToken, access_token_hash: tokenHash },
+    isExisting: false,
+  };
 }
 
 export async function regenerateEventToken(eventId) {

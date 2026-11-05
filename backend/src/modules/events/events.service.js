@@ -10,6 +10,7 @@ export async function listEvents() {
       e.description, 
       e.start_at, 
       e.end_at, 
+      e.duration_minutes,
       e.status,
       e.raw_access_token,
       e.created_at,
@@ -27,8 +28,8 @@ export async function listEvents() {
 
 export async function getEventById(id) {
   const res = await query(
-    `SELECT e.id, e.title, e.description, e.start_at, e.end_at, e.status, e.created_at, e.updated_at,
-            e.access_token_hash,
+    `SELECT e.id, e.title, e.description, e.start_at, e.end_at, e.duration_minutes, e.status, e.created_at, e.updated_at,
+            e.access_token_hash, e.raw_access_token,
             COUNT(DISTINCT em.member_id)::int AS total_members,
             COUNT(DISTINCT vp.member_id)::int AS submitted_ballots
      FROM events e
@@ -52,7 +53,7 @@ export async function getEventById(id) {
   return event;
 }
 
-export async function createEvent({ title, description, startAt, endAt, categories = ['Best Dressing', 'Best Speech'], adminId }) {
+export async function createEvent({ title, description, durationMinutes = 5, startAt, endAt, categories = ['Best Dressing', 'Best Speech'], adminId }) {
   const rawToken = generateSecureToken(32);
   const tokenHash = hashToken(rawToken);
 
@@ -60,22 +61,29 @@ export async function createEvent({ title, description, startAt, endAt, categori
   try {
     await client.query('BEGIN');
 
-    // Determine initial status based on timestamps
-    const now = new Date();
-    const start = new Date(startAt);
-    const end = new Date(endAt);
-    let initialStatus = 'scheduled';
-    if (now >= start && now < end) {
-      initialStatus = 'active';
-    } else if (now >= end) {
-      initialStatus = 'closed';
+    // Default status is draft (waiting for admin to click Start)
+    let initialStatus = 'draft';
+    let finalStart = startAt || null;
+    let finalEnd = endAt || null;
+
+    if (startAt && endAt) {
+      const now = new Date();
+      const s = new Date(startAt);
+      const e = new Date(endAt);
+      if (now >= s && now < e) {
+        initialStatus = 'active';
+      } else if (now >= e) {
+        initialStatus = 'closed';
+      } else {
+        initialStatus = 'scheduled';
+      }
     }
 
     const eventRes = await client.query(
-      `INSERT INTO events (title, description, start_at, end_at, status, access_token_hash, raw_access_token, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id, title, description, start_at, end_at, status, raw_access_token, created_at`,
-      [title, description || null, startAt, endAt, initialStatus, tokenHash, rawToken, adminId]
+      `INSERT INTO events (title, description, start_at, end_at, duration_minutes, status, access_token_hash, raw_access_token, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, title, description, start_at, end_at, duration_minutes, status, raw_access_token, created_at`,
+      [title, description || null, finalStart, finalEnd, durationMinutes, initialStatus, tokenHash, rawToken, adminId]
     );
     const event = eventRes.rows[0];
 
@@ -95,7 +103,7 @@ export async function createEvent({ title, description, startAt, endAt, categori
     return {
       ...event,
       categories: createdCategories,
-      rawAccessToken: rawToken, // Returned ONLY upon creation or regeneration
+      rawAccessToken: rawToken,
     };
   } catch (err) {
     await client.query('ROLLBACK');
@@ -103,6 +111,27 @@ export async function createEvent({ title, description, startAt, endAt, categori
   } finally {
     client.release();
   }
+}
+
+export async function startVotingNow(id, durationMinutes) {
+  const existing = await getEventById(id);
+  if (!existing) {
+    throw new AppError('Event not found', 404, 'EVENT_NOT_FOUND');
+  }
+
+  const mins = durationMinutes || existing.duration_minutes || 5;
+  const now = new Date();
+  const end = new Date(now.getTime() + mins * 60 * 1000);
+
+  const res = await query(
+    `UPDATE events
+     SET status = 'active', start_at = $1, end_at = $2, duration_minutes = $3, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $4
+     RETURNING id, title, description, start_at, end_at, duration_minutes, status, updated_at`,
+    [now.toISOString(), end.toISOString(), mins, id]
+  );
+
+  return res.rows[0];
 }
 
 export async function updateEvent(id, { title, description, startAt, endAt, status }) {
